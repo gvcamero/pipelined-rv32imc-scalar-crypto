@@ -1,3 +1,7 @@
+This is an experimental branch that moves the data and instruction memory outside the core, to be replaced with AMBA AXI4/AXI4-Lite bus interfaces. The new core is *core-extmem* and this modified core does not yet work with the top module.
+
+The changes made to the instmem and datamem modules break *top.v* and *core.v*. Do not use this branch if you're trying to use them.
+
 # Pipelined RV32IMC Core
 This is a RISC-V RV32IMC core that is currently being adapted for implementation in a test chip as part of [Center for Integrated Devices Research (CIDR) Project 3](https://cidr.up-microlab.org/index.php/Energy_Efficient_Machine_Learning_Hardware_Co-design).
 
