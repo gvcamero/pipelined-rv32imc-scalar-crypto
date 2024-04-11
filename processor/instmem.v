@@ -20,6 +20,7 @@
 `timescale 1ns / 1ps
 
 `include "constants.vh"
+`define DEFAULT_FILL    32'h01000100
 
 module instmem #(
     parameter INSTMEM_PROGRAM = "instmem.mem",
@@ -33,18 +34,24 @@ module instmem #(
 	
 	wire [`WORD_WIDTH-1:0] prog;
 	wire [`WORD_WIDTH-1:0] isr;
-	wire [`PC_ADDR_BITS-1:0] addr_1 = addr[`PC_ADDR_BITS-1:1];
-    wire [`PC_ADDR_BITS-1:0] addr_2 = addr[`PC_ADDR_BITS-1:1] + 11'd1;
+	wire [`WORD_WIDTH-1:0] inst_be;
+	// wire [`PC_ADDR_BITS-1:0] addr_1 = addr[`PC_ADDR_BITS-1:1];
+    // wire [`PC_ADDR_BITS-1:0] addr_2 = addr[`PC_ADDR_BITS-1:1] + 11'd1;
 
-	reg [`MEM_WIDTH-1:0] instmem [0:`MEM_DEPTH-1];
-	reg [`MEM_WIDTH-1:0] isr_mem [0:`ISR_DEPTH-1];
+	reg [`WORD_WIDTH-1:0] instmem [0:`MEM_DEPTH-1];
+	reg [`WORD_WIDTH-1:0] isr_mem [0:`ISR_DEPTH-1];
+	
+	integer i;
 	initial begin
+	    for (i = 0; i < `MEM_DEPTH; i=i+1) begin
+	       instmem[i] = `DEFAULT_FILL;
+	    end
 		$readmemh(INSTMEM_PROGRAM, instmem);
 		$readmemh(ISR_PROGRAM, isr_mem);
 	end
-	assign prog = {instmem[addr_2], instmem[addr_1]};
-	assign isr = {isr_mem[addr_2], isr_mem[addr_1]};
+	assign prog = instmem[addr[`PC_ADDR_BITS-1:2]];
+	assign isr = isr_mem[addr[`PC_ADDR_BITS-1:2]];
 
-
-	assign inst = sel_ISR? isr : prog;
+    assign inst_be = sel_ISR? isr : prog;
+    assign inst = {inst_be[7:0], inst_be[15:8], inst_be[23:16], inst_be[31:24]};
 endmodule

@@ -38,12 +38,12 @@
 
 `define INT_SIG_WIDTH 6         // If changing this, make sure to go to mcont.v so interrupt signals match the width
 
-`define MEM_DEPTH 8192          // For 16kB Halfword-addressable Instruction Memory
+`define MEM_DEPTH 4096          // For 16kB Halfword-addressable Instruction Memory
 `define ISR_DEPTH 512           // ISR
 `define MEM_WIDTH 16            // Halfwords
 `define WORD_WIDTH 32           // Word width of 32bits; Used for Instructions, operands, and immediates
 
-`define PC_ADDR_BITS 14         // For addressing 16kB Instruction memory
+`define PC_ADDR_BITS 14         // For addressing 16kB Instruction memory @ 16-bit width
 
 // If changing any of the parameters below, double check datamem.v, since some signals
 // there don't use parameters.

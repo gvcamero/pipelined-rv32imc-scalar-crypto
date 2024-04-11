@@ -41,12 +41,14 @@ module datamem #(
 	input [3:0] dm_write,
 	input [`DATAMEM_BITS-1:0] data_addr,
 	input [`DATAMEM_WIDTH-1:0] data_in,
+	input data_en,
 
 	// Inputs from protocol controllers
 	// NOTE: protocol controllers cannot read from FPGAIO
 	input [3:0] con_write,				// Similar to dm_write
 	input [`DATAMEM_BITS-1:0] con_addr,	// datamem address from protocol controller
 	input [`DATAMEM_WIDTH-1:0] con_in,	// data input from protocol controller
+	input con_en,
 
 	// Outputs
 	output [`DATAMEM_WIDTH-1:0] data_out,	// data output to the RISC-V core

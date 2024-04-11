@@ -51,6 +51,8 @@ module sf_controller(
 
     // IF stage
     input [`PC_ADDR_BITS-1:0] if_pc,
+	input [`PC_ADDR_BITS-1:0] if_pcnew,
+    input if_ready,
 
     // ID stage inputs
 	input [`PC_ADDR_BITS-1:0] id_pc,
@@ -65,6 +67,9 @@ module sf_controller(
 
     input mul_stall,            // Stall due to multiplication
     input div_running,			// Status of Divider unit
+    
+    input dmem_stall,           // Stall in datamem unit 
+    input dmem_ready,           // Datamem load output ready
 
     // Stalls/Enables
 	output if_stall,			// controls PC + instmem stall
@@ -229,7 +234,7 @@ module sf_controller(
     assign fw_wb_to_exe_A = t_fw_wb_to_exe_A && !wb_prev_flush;
     assign fw_wb_to_exe_B = t_fw_wb_to_exe_B && !wb_prev_flush;
 
-    wire loop_jump = (if_pc == id_pc) && is_jump && ~id_sel_opBR && ~id_stall && ~exe_flush;
+    wire loop_jump = (if_pc == if_pcnew) && (if_pc == id_pc) && is_jump && ~id_sel_opBR && ~id_stall && ~exe_flush;
     
     wire exe_jalr_hazard = hzd_exe_to_id_A && id_sel_opBR;							// LOAD -> JALR (EXE stage) will result in a one-cycle stall for IF and ID stages
     wire mem_jalr_hazard = hzd_mem_to_id_A && id_sel_opBR;                          // LOAD -> JALR (MEM stage) will result in a one-cycle stall for IF,ID, and EXE stages
@@ -241,13 +246,14 @@ module sf_controller(
     */
     
     // Stalls/Enables
-    assign if_stall = ((load_hazard  && ~mem_prev_flush) || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall);
-    assign id_stall = ((load_hazard  && ~mem_prev_flush) || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall);
-    wire exe_stall = ((load_hazard  && ~mem_prev_flush) || mem_jalr_hazard || div_running || mul_stall);					
+    assign if_stall = ((load_hazard  && ~mem_prev_flush) || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || dmem_stall || ~if_ready);
+    assign id_stall = ((load_hazard  && ~mem_prev_flush) || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || dmem_stall);
+    wire exe_stall = ((load_hazard  && ~mem_prev_flush) || mem_jalr_hazard || div_running || mul_stall || dmem_stall);
+    wire mem_stall = dmem_stall;					
 
     // Flushes/Resets
     assign if_flush = ISR_PC_flush;
-    assign id_flush = ISR_pipe_flush || jump_flush || branch_flush;
+    assign id_flush = (ISR_pipe_flush || jump_flush || branch_flush) || !if_ready;
     assign exe_flush = exe_jalr_hazard || branch_flush || (is_nop && ~(load_hazard  && ~mem_prev_flush));
     assign mem_flush = (load_hazard && ~mem_prev_flush) || div_running || mul_stall;	// flushing the MEM-stage for two straight cycles is disabled for forwarding reasons
     assign wb_flush = 1'b0;
@@ -270,7 +276,7 @@ module sf_controller(
     assign if_clk_en = shut_down || (~(if_stall || (loop_jump && ~ISR_pipe_flush)) && nrst);
     assign id_clk_en = shut_down || (~(id_stall || (loop_jump && ~ISR_pipe_flush)) && nrst);
     assign exe_clk_en = shut_down || (~(exe_stall || (id_prev_flush && ~exe_flush) || (is_nop && ~exe_flush)) && nrst);
-    assign mem_clk_en = shut_down || (~(mem_flush || (exe_prev_flush && ~mem_jalr_hazard)) && nrst);
+    assign mem_clk_en = shut_down || (~(mem_stall || mem_flush || (exe_prev_flush && ~mem_jalr_hazard)) && nrst);
     assign wb_clk_en = shut_down || (~mem_prev_flush && nrst);
     assign rf_clk_en = shut_down ||  (~wb_prev_flush && wb_wr_en && nrst);
 
@@ -294,7 +300,10 @@ module sf_controller(
 			prev_nrst <= 1'b1;
             id_prev_flush <= ((id_flush || loop_jump) && ~ISR_pipe_flush);
             exe_prev_flush <= (id_prev_flush ? id_prev_flush : exe_flush);
-            mem_prev_flush <= (exe_prev_flush ? exe_prev_flush : mem_flush);
+            if (mem_stall)
+                mem_prev_flush <= (exe_prev_flush ? exe_prev_flush : 1'b0);
+            else
+                mem_prev_flush <= (exe_prev_flush ? exe_prev_flush : mem_flush);
             wb_prev_flush <= (mem_prev_flush ? mem_prev_flush : wb_flush);
         end
     end
