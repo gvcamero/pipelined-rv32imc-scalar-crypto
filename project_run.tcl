@@ -13,13 +13,10 @@ add_files ./memory/isr_mem.mem
 #Add constraints
 add_files -fileset constrs_1 ./constraints/arty7_a35t.xdc
 
-#Add testbench and answer key
-add_files -fileset sim_1 ./sim/tb_top.v
-add_files -fileset sim_1 ./sim/tb_core.v
 # New core-only testbenches
 create_fileset -simset sim_new
-add_files -fileset sim_new ./sim/tb_core_parametrized.sv
-add_files -fileset sim_new ./sim/tb_core_parametrized_single.sv
+add_files -fileset sim_new ./sim/tb_core_extmem.sv
+add_files -fileset sim_new ./sim/tb_core_extmem_single.sv
 add_files ./memory/answerkey.mem
 
 #Set tb_top to be top module of simulation sources
