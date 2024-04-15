@@ -39,7 +39,9 @@ module core_extmem #(
 	output [`DATAMEM_BITS-1:0] ext_data_addr,	
 	output [`DATAMEM_WIDTH-1:0] ext_data_store,	
 	input [`DATAMEM_WIDTH-1:0] ext_data_load,
-	output ext_data_en,
+	output ext_data_req,
+	input ext_data_gnt,
+	input ext_data_valid,
 	
 	// Instruction Memory I/O
 	output [`PC_ADDR_BITS-1:0] ext_inst_addr,
