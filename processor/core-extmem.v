@@ -910,28 +910,7 @@ module core_extmem #(
     wire mem_dm_en;
     wire [`DATAMEM_BITS:0] mem_dm_addr;
     
-    /*
-	datamem #(
-	   .INITIAL_DATA(DATA_I)
-	) DATAMEM (
-		.core_clk(mem_clk),
-		.con_clk(CLK_BUF),
-		.nrst(nrst),
-
-		.dm_write(exe_dm_write),
-		.data_addr(mem_dm_addr),        
-		.data_in(exe_storedata),
-		.data_en(mem_dm_en),
-
-		.con_write(con_write),
-		.con_addr(con_addr),
-		.con_in(con_in),
-		.con_en(1'b1),
-
-		.data_out(mem_DATAMEMout),
-		.con_out(con_out)
-	);
-	*/
+    
 	assign ext_data_write = exe_dm_write;
 	assign ext_data_addr = mem_dm_addr;	
 	assign ext_data_store = exe_storedata;	
@@ -964,23 +943,6 @@ module core_extmem #(
          .dm_ready(mem_dm_ready)
 	);
 
-/*
-	loadblock LOADBLOCK(
-		.data(mem_DATAMEMout),
-		.byte_offset(mem_ALUout[1:0]),
-		.dm_select(mem_dm_select),
-		.loaddata(mem_loaddata)
-	);
-	
-	storeblock STOREBLOCK(
-		.opB(exe_rstore),
-		.byte_offset(exe_ALUout[1:0]),
-		.store_select(exe_store_select),
-		.is_stype(exe_is_stype),
-		.data(exe_storedata),
-		.dm_write(exe_dm_write)
-	);
-*/
 	pipereg_mem_wb MEM_WB(
 		.clk(wb_clk),
 		.nrst(nrst),

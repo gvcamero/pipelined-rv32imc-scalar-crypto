@@ -25,7 +25,9 @@ module datamem_interface(
         
         // Control Outputs
         output dm_stall,
-        output dm_en,
+        output dm_req,
+        input dm_gnt,
+        input dm_valid,
         output dm_ready
         /*
         // Control Outputs
