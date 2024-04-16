@@ -22,11 +22,7 @@
 `include "constants.vh"
 `include "config.vh"
 
-module core_extmem #(
-    parameter DATA_I = "datamem.mem",
-    parameter PROG_I = "instmem.mem",
-    parameter ISR_I = "isr_mem.mem"
-     )(
+module core_extmem #() (
 	input CLKIP_OUT,			// 50MHz unbuffered clock
 	input CLK_BUF,				// 50MHz buffered clock
 	input nrst,
@@ -43,17 +39,13 @@ module core_extmem #(
 	input ext_data_gnt,
 	input ext_data_valid,
 	
+	
 	// Instruction Memory I/O
 	output [`PC_ADDR_BITS-1:0] ext_inst_addr,
-	input [`WORD_WIDTH-1:0] ext_inst_data
-
-    /*
-	// inputs from protocol controllers
-	input [3:0] con_write,				// Write enable signal
-	input [`DATAMEM_BITS-1:0] con_addr,	// Word-aligned data address
-	input [`DATAMEM_WIDTH-1:0] con_in,		// Input data from Protocol controllers
-	output [`DATAMEM_WIDTH-1:0] con_out	// Ouput of DATAMEM connected to Protocol controllers
-	*/
+	input [`WORD_WIDTH-1:0] ext_inst_data,
+	
+	// Debug Outputs
+	output [`WORD_WIDTH-1:0] ext_if_inst
 );
 	
 /******************************** DECLARING WIRES *******************************/
@@ -64,6 +56,7 @@ module core_extmem #(
 	wire [`PC_ADDR_BITS-1:0] if_PC;			// Output of PC, input to INSTMEM
 	wire [`PC_ADDR_BITS-1:0] if_pc4;		// PC + 4
 	wire [`WORD_WIDTH-1:0] if_inst;			// INSTMEM Output
+	assign ext_if_inst = if_inst;
 	
 	wire if_ready;                          // INSTMEM Output Ready
 // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -512,10 +505,7 @@ module core_extmem #(
 
 // IF Stage ======================================================================
     
-	instmem_interface #(
-	   .INSTMEM_PROGRAM(PROG_I),
-       .ISR_PROGRAM(ISR_I)
-	) IM_I (
+	instmem_interface #() IM_I (
         .clk(CLKIP_OUT),
         .nrst(nrst),
         .if_flush(if_flush),
@@ -910,12 +900,33 @@ module core_extmem #(
     wire mem_dm_en;
     wire [`DATAMEM_BITS:0] mem_dm_addr;
     
-    
+    /*
+	datamem #(
+	   .INITIAL_DATA(DATA_I)
+	) DATAMEM (
+		.core_clk(mem_clk),
+		.con_clk(CLK_BUF),
+		.nrst(nrst),
+
+		.dm_write(exe_dm_write),
+		.data_addr(mem_dm_addr),        
+		.data_in(exe_storedata),
+		.data_en(mem_dm_en),
+
+		.con_write(con_write),
+		.con_addr(con_addr),
+		.con_in(con_in),
+		.con_en(1'b1),
+
+		.data_out(mem_DATAMEMout),
+		.con_out(con_out)
+	);
+	*/
 	assign ext_data_write = exe_dm_write;
 	assign ext_data_addr = mem_dm_addr;	
 	assign ext_data_store = exe_storedata;	
 	assign mem_DATAMEMout = ext_data_load;
-	assign ext_data_en = mem_dm_en;
+	assign ext_data_req = mem_dm_en;
 	
 	datamem_interface DM_I(
 	     .clk(CLKIP_OUT),
@@ -938,11 +949,28 @@ module core_extmem #(
          .lb_dm_select(mem_dm_select),    
          .lb_loaddata(mem_loaddata),
          
-         .dm_en(mem_dm_en),
+         .dm_req(mem_dm_en),
          .dm_stall(mem_dm_stall),
          .dm_ready(mem_dm_ready)
 	);
 
+/*
+	loadblock LOADBLOCK(
+		.data(mem_DATAMEMout),
+		.byte_offset(mem_ALUout[1:0]),
+		.dm_select(mem_dm_select),
+		.loaddata(mem_loaddata)
+	);
+	
+	storeblock STOREBLOCK(
+		.opB(exe_rstore),
+		.byte_offset(exe_ALUout[1:0]),
+		.store_select(exe_store_select),
+		.is_stype(exe_is_stype),
+		.data(exe_storedata),
+		.dm_write(exe_dm_write)
+	);
+*/
 	pipereg_mem_wb MEM_WB(
 		.clk(wb_clk),
 		.nrst(nrst),

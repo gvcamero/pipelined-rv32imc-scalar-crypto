@@ -51,7 +51,7 @@ module datamem_interface(
     reg [`DATAMEM_BITS-1:0] addr_out_reg;
     assign addr_out = addr_out_reg;
     reg dm_en_reg;
-    assign dm_en = dm_en_reg;
+    assign dm_req = dm_en_reg;
     
     reg [1:0] state;
     assign dm_stall = (sb_is_stype || sel_data == 3'd3) && (state != 2'd3);

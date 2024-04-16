@@ -41,8 +41,12 @@ module datamem #(
 	input [3:0] dm_write,
 	input [`DATAMEM_BITS-1:0] data_addr,
 	input [`DATAMEM_WIDTH-1:0] data_in,
-	input data_en,
-
+	
+	// Transactional I/O
+	input data_valid,
+	output data_gnt,
+	output data_req,
+	
 	// Inputs from protocol controllers
 	// NOTE: protocol controllers cannot read from FPGAIO
 	input [3:0] con_write,				// Similar to dm_write
@@ -68,6 +72,10 @@ module datamem #(
 	// This part converts them to little-endian format
 	wire [`DATAMEM_WIDTH-1:0] data_in_little_e = {data_in[7:0], data_in[15:8], data_in[23:16], data_in[31:24]};
 	wire [`DATAMEM_WIDTH-1:0] con_in_little_e = {con_in[7:0], con_in[15:8], con_in[23:16], con_in[31:24]};
+	
+	// temp solution
+	assign data_gnt = 1;
+	assign data_valid = 1;
 
     `ifdef FEATURE_XILINX_DATAMEM_IP_GEN
 	// Datamem that uses BLOCKMEM from Vivado IP Catalog
