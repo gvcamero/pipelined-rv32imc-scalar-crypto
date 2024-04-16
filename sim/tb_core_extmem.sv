@@ -219,6 +219,7 @@ module tb_core_extmem();
         
         wire [`PC_ADDR_BITS-1:0] core_inst_addr;
 	    wire [`WORD_WIDTH-1:0] core_inst_data;
+	    wire [`WORD_WIDTH-1:0] core_if_inst;
         
         datamem #(
             .INITIAL_DATA(temp_data)
@@ -268,11 +269,12 @@ module tb_core_extmem();
             .ext_data_valid(core_data_valid),
             
             .ext_inst_addr(core_inst_addr),
-	        .ext_inst_data(core_inst_data)
+	        .ext_inst_data(core_inst_data),
+	        .ext_if_inst(core_if_inst)
         );
         answerkey_i #(.REF_OUT(temp_refm)) AK();
         
-        assign INST[i_f] = CORE.if_inst;
+        assign INST[i_f] = core_if_inst;
         
         assign box[i_f] = {AK.memory[con_addr[i_f]][7:0], AK.memory[con_addr[i_f]][15:8], AK.memory[con_addr[i_f]][23:16], AK.memory[con_addr[i_f]][31:24]};
         
@@ -395,7 +397,7 @@ module tb_core_extmem();
 endmodule
 
 // ANSWER KEY
-module answerkey #(parameter REF_OUT = "answerkey.mem")();
+module answerkey_i #(parameter REF_OUT = "answerkey.mem")();
 	reg [31:0] memory [0:`DATAMEM_DEPTH-1];
 	initial begin
 	    for (int i = 0; i < `DATAMEM_DEPTH-1; i++) begin

@@ -22,64 +22,70 @@ module tb_core_extmem_single();
     localparam string temp_refm = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/mem/I-BGE-01.mem");
 
 	wire [3:0] core_data_write;
-        wire [`DATAMEM_BITS-1:0] core_data_addr;	
-        wire [`DATAMEM_WIDTH-1:0] core_data_store;	
-        wire [`DATAMEM_WIDTH-1:0] core_data_load;
-        wire core_data_en;
-        
-        wire [31:0] con_out_t;
-        
-        wire [`PC_ADDR_BITS-1:0] core_inst_addr;
-	    wire [`WORD_WIDTH-1:0] core_inst_data;
-        
-        datamem #(
-            .INITIAL_DATA(temp_data)
-        ) DATAMEM (
-            .core_clk(CLK),
-            .con_clk(CLK),
-            .nrst(nrst),
+    wire [`DATAMEM_BITS-1:0] core_data_addr;	
+    wire [`DATAMEM_WIDTH-1:0] core_data_store;	
+    wire [`DATAMEM_WIDTH-1:0] core_data_load;
+    wire core_data_request;
+    wire core_data_grant;
+    wire core_data_valid;
     
-            .dm_write(core_data_write),
-            .data_addr(core_data_addr),        
-            .data_in(core_data_store),
-            .data_en(core_data_en),
+    wire [`PC_ADDR_BITS-1:0] core_inst_addr;
+    wire [`WORD_WIDTH-1:0] core_inst_data;
     
-            .con_write(con_write),
-            .con_addr(con_addr),
-            .con_in(con_in),
-            .con_en(1'b1),
-    
-            .data_out(core_data_load),
-            .con_out(con_out)
-        );
-        
-        instmem #(
-           .INSTMEM_PROGRAM(temp_inst)
-        ) INSTMEM (
-            .sel_ISR(1'b0),
-    
-            .addr(core_inst_addr),
-            .inst(core_inst_data)
-        );
-        
-        core_extmem #() CORE(
-            .CLKIP_OUT(CLK),
-            .CLK_BUF(CLK),
-            .nrst(nrst),
-    
-            .int_sig(int_sig),
-            
-            .ext_data_write(core_data_write),
-            .ext_data_addr(core_data_addr),        
-            .ext_data_store(core_data_store),
-            .ext_data_en(core_data_en),
-            .ext_data_load(core_data_load),
-            
-            .ext_inst_addr(core_inst_addr),
-	        .ext_inst_data(core_inst_data)
-        );
+    datamem #(
+    .INITIAL_DATA(temp_data)
+    ) DATAMEM (
+        .core_clk(CLK),
+        .con_clk(CLK),
+        .nrst(nrst),
 
-	answerkey #(.REF_OUT(temp_refm)) AK ();
+        .dm_write(core_data_write),
+        .data_addr(core_data_addr),        
+        .data_in(core_data_store),
+        .data_req(core_data_request),
+        .data_gnt(core_data_grant),
+        .data_valid(core_data_valid),
+
+        .con_write(con_write),
+        .con_addr(con_addr),
+        .con_in(con_in),
+        .con_en(1'b1),
+
+        .data_out(core_data_load),
+        .con_out(con_out)
+    );
+    
+    instmem #(
+       .INSTMEM_PROGRAM(temp_inst)
+    ) INSTMEM (
+        .sel_ISR(1'b0),
+
+        .addr(core_inst_addr),
+        .inst(core_inst_data)
+    );
+    
+    core_extmem #() CORE(
+        .CLKIP_OUT(CLK),
+        .CLK_BUF(CLK),
+        .nrst(nrst),
+
+        .int_sig(int_sig),
+        
+        .ext_data_write(core_data_write),
+        .ext_data_addr(core_data_addr),        
+        .ext_data_store(core_data_store),
+        .ext_data_load(core_data_load),
+        .ext_data_req(core_data_request),
+        .ext_data_gnt(core_data_grant),
+        .ext_data_valid(core_data_valid),
+        
+        .ext_inst_addr(core_inst_addr),
+        .ext_inst_data(core_inst_data)
+    );
+    
+    wire [31:0] box;
+    answerkey_i #(.REF_OUT(temp_refm)) AK();
+    assign box = {AK.memory[con_addr][7:0], AK.memory[con_addr][15:8], AK.memory[con_addr][23:16], AK.memory[con_addr][31:24]};
 
 	always
 		#10 CLK = ~CLK;		// 50MHz clock
@@ -402,7 +408,7 @@ module tb_core_extmem_single();
 
 	always@(negedge CLK) begin
 		if(done) begin	
-			if(con_out == AK.memory[con_addr]) begin
+			if(con_out == box) begin
 				//$display("0x%3X\t0x%X\t0x%X\tPass", con_addr, con_out, AK.memory[con_addr]);
 				pass = pass + 1;
 			end else begin
@@ -481,7 +487,7 @@ module tb_core_extmem_single();
 endmodule
 
 // ANSWER KEY
-module answerkey #(parameter REF_OUT = "answerkey.mem")();
+module answerkey_i #(parameter REF_OUT = "answerkey.mem")();
 	reg [31:0] memory [0:`DATAMEM_DEPTH-1];
 	initial begin
 	    for (int i = 0; i < `DATAMEM_DEPTH-1; i++) begin
