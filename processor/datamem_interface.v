@@ -40,6 +40,16 @@ module datamem_interface(
         */
     ); 
     
+    // States
+    localparam STATE_NONE = 3'd0;
+    
+    localparam STATE_ISSUE_LOAD = 3'd1;
+    localparam STATE_ISSUE_STORE = 3'd2;
+    
+    localparam STATE_ACK_LOAD = 3'd3;
+    
+    localparam STATE_FINISH = 3'd7; 
+    
     reg [31:0] lb_data_reg;
     
     wire [31:0] sb_data_t;
@@ -53,8 +63,8 @@ module datamem_interface(
     reg dm_en_reg;
     assign dm_req = dm_en_reg;
     
-    reg [1:0] state;
-    assign dm_stall = (sb_is_stype || sel_data == 3'd3) && (state != 2'd3);
+    reg [2:0] state;
+    assign dm_stall = (sb_is_stype || sel_data == 3'd3) && (state != STATE_FINISH);
     reg dm_ready_reg;
     assign dm_ready = dm_ready_reg;
     
@@ -81,7 +91,7 @@ module datamem_interface(
 	// DATA
 	always@(posedge clk) begin
 	   if (!nrst) begin
-	       state <= 2'd0;
+	       state <= STATE_NONE;
 	       
            sb_data_reg <= 32'h0;
            sb_dm_write_reg <= 4'h0;
@@ -94,7 +104,7 @@ module datamem_interface(
        else begin
             case(state)
                 // No current memory op
-                2'd0: begin
+                STATE_NONE: begin
                     if (is_mem_op) begin
                         // Issue operation
                         dm_en_reg <= 1'b1;
@@ -102,18 +112,18 @@ module datamem_interface(
                         
                         // LOADS take precedence
                         if (sel_data == 3'd3) begin
-                            state <= 2'd1;
+                            state <= STATE_ISSUE_LOAD;
                             sb_data_reg <= 32'h0;
                             sb_dm_write_reg <= 4'h0;
                         end
                         else begin
-                            state <= 2'd3;
+                            state <= STATE_FINISH;
                             sb_data_reg <= sb_data_t;
                             sb_dm_write_reg <= sb_dm_write_t;
                         end
                     end
                     else begin
-                        state <= 2'd0;
+                        state <= STATE_NONE;
                        
                         sb_data_reg <= 32'h0;
                         sb_dm_write_reg <= 4'h0;
@@ -125,8 +135,8 @@ module datamem_interface(
                 end
                 
                 // Active load op
-                2'd1: begin
-                   state <= 2'd3;
+                STATE_ISSUE_LOAD: begin
+                   state <= STATE_FINISH;
                    
                    sb_data_reg <= 32'h0;
                    sb_dm_write_reg <= 4'h0;
@@ -138,8 +148,8 @@ module datamem_interface(
                 
                 // Active store op
                 // currently unused
-                2'd2: begin
-                   state <= 2'd0;
+                STATE_ISSUE_STORE: begin
+                   state <= STATE_NONE;
                    
                    sb_data_reg <= 32'h0;
                    sb_dm_write_reg <= 4'h0;
@@ -150,11 +160,11 @@ module datamem_interface(
                 end
                 
                 // Finishing op
-                2'd3: begin
+                STATE_FINISH: begin
                    if (!mem_flush)
-                        state <= 2'd0;
+                        state <= STATE_NONE;
                    else
-                        state <= 2'd3;
+                        state <= STATE_FINISH;
                    
                    sb_data_reg <= 32'h0;
                    sb_dm_write_reg <= 4'h0;

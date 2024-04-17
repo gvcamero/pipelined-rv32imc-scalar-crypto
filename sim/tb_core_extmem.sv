@@ -193,6 +193,7 @@ module tb_core_extmem();
     integer i, j, check, done, pass, consecutive_nops;
     integer total_test_cases = 0;
     integer print_metrics;
+    integer total_error_count = 0;
     
     // Tracking "highest" data address written to for
     // displaying only what's needed in the answer key
@@ -345,6 +346,7 @@ module tb_core_extmem();
             end else begin
                 if (!print_metrics) begin
                     $display("0x%3X\t0x%X\t0x%X\tFail--------------------", con_addr, con_out, box);
+                    total_error_count = total_error_count + 1;
                 end
             end
 
@@ -358,8 +360,10 @@ module tb_core_extmem();
         $display("Passed %0d/%0d test cases.\n\n", pass, total_test_cases);
         suite_done[i_k] = 1;
         nrst = 0;
-        if (i_k == NUM_TESTS - 1)
+        if (i_k == NUM_TESTS - 1) begin
+            $display("Error count across %0d tests: %0d. \n\n", NUM_TESTS, total_error_count);
             $finish;
+        end
     end 
     
     always@(posedge CLK) begin

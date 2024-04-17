@@ -928,27 +928,13 @@ module core_extmem (
          .lb_loaddata(mem_loaddata),
          
          .dm_req(mem_dm_en),
+         .dm_gnt(ext_data_gnt),
+         .dm_valid(ext_data_valid),
+         
          .dm_stall(mem_dm_stall),
          .dm_ready(mem_dm_ready)
 	);
 
-/*
-	loadblock LOADBLOCK(
-		.data(mem_DATAMEMout),
-		.byte_offset(mem_ALUout[1:0]),
-		.dm_select(mem_dm_select),
-		.loaddata(mem_loaddata)
-	);
-	
-	storeblock STOREBLOCK(
-		.opB(exe_rstore),
-		.byte_offset(exe_ALUout[1:0]),
-		.store_select(exe_store_select),
-		.is_stype(exe_is_stype),
-		.data(exe_storedata),
-		.dm_write(exe_dm_write)
-	);
-*/
 	pipereg_mem_wb MEM_WB(
 		.clk(wb_clk),
 		.nrst(nrst),
