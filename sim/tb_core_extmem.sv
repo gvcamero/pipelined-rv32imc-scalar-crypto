@@ -164,17 +164,15 @@ module tb_core_extmem();
     };
 	
 	reg CLK;
-	reg nrst[0:NUM_TESTS-1];
-
-	reg [`INT_SIG_WIDTH-1:0] int_sig;
+	reg nrst;
 
 	reg [3:0] con_write;
-	reg [`DATAMEM_BITS-1:0] con_addr [0:NUM_TESTS-1];
+	reg [`DATAMEM_BITS-1:0] con_addr;
 	reg [`WORD_WIDTH-1:0] con_in;
-	wire [`WORD_WIDTH-1:0] con_out [0:NUM_TESTS-1];
+	wire [`WORD_WIDTH-1:0] con_out;
 
-	wire [`WORD_WIDTH:0] INST [0:NUM_TESTS];
-	reg [`WORD_WIDTH:0] last_inst [0:NUM_TESTS];
+	wire [`WORD_WIDTH:0] INST;
+	reg [`WORD_WIDTH:0] last_inst;
 	
 	always
 	   #10 CLK = ~CLK;		// 50MHz clock
@@ -185,215 +183,226 @@ module tb_core_extmem();
 	
 	
 	
-	reg [31:0] nop_counter [0:NUM_TESTS];
+	reg [31:0] nop_counter;
 	// Checking for 10 NOPs/50 looping jumps in a row
     // NOTE: checking for last_inst should be done for at least 50 cycles
     // if there are DIV operations running in the processor.
-    wire [31:0] box[0:NUM_TESTS-1];
+    wire [31:0] box;
     
-    reg suite_done [0:NUM_TESTS-1];
+    // Integers for checking results through the answer key
+    integer i, j, check, done, pass, consecutive_nops;
+    integer total_test_cases = 0;
+    integer print_metrics;
+    
+    // Tracking "highest" data address written to for
+    // displaying only what's needed in the answer key
+    // (since there is no need to display the addresses
+    // not written to)
+    integer max_data_addr;
+    
+    reg suite_done [NUM_TESTS];
+    
+    wire [3:0] core_data_write;
+    wire [`DATAMEM_BITS-1:0] core_data_addr;	
+    wire [`DATAMEM_WIDTH-1:0] core_data_store;	
+    wire [`DATAMEM_WIDTH-1:0] core_data_load;
+    wire core_data_request;
+    wire core_data_grant;
+    wire core_data_valid;
+    
+    wire [`PC_ADDR_BITS-1:0] core_inst_addr;
+    wire [`WORD_WIDTH-1:0] core_inst_data;
+    wire [`WORD_WIDTH-1:0] core_if_inst;
+    
+    datamem #() DATAMEM (
+        .core_clk(CLK),
+        .con_clk(CLK),
+        .nrst(nrst),
+
+        .dm_write(core_data_write),
+        .data_addr(core_data_addr),        
+        .data_in(core_data_store),
+        .data_req(core_data_request),
+        .data_gnt(core_data_grant),
+        .data_valid(core_data_valid),
+
+        .con_write(con_write),
+        .con_addr(con_addr),
+        .con_in(con_in),
+        .con_en(1'b1),
+
+        .data_out(core_data_load),
+        .con_out(con_out)
+    );
+    
+    instmem #() INSTMEM (
+        .sel_ISR(1'b0),
+
+        .addr(core_inst_addr),
+        .inst(core_inst_data)
+    );
+    
+    core_extmem #() CORE(
+        .CLKIP_OUT(CLK),
+        .CLK_BUF(CLK),
+        .nrst(nrst),
+
+        .int_sig(int_sig),
+        
+        .ext_data_write(core_data_write),
+        .ext_data_addr(core_data_addr),        
+        .ext_data_store(core_data_store),
+        .ext_data_load(core_data_load),
+        .ext_data_req(core_data_request),
+        .ext_data_gnt(core_data_grant),
+        .ext_data_valid(core_data_valid),
+        
+        .ext_inst_addr(core_inst_addr),
+        .ext_inst_data(core_inst_data),
+        .ext_if_inst(core_if_inst)
+    );
+    
+    answerkey_i #() AK();
+    
+    assign INST = core_if_inst;
+        
+    assign box = {AK.memory[con_addr][7:0], AK.memory[con_addr][15:8], AK.memory[con_addr][23:16], AK.memory[con_addr][31:24]};
+    
+    initial begin
+        CLK = 0;
+    end
+    
+    genvar i_f;
+    integer i_k;
 	
-	for (genvar i_f=0; i_f < NUM_TESTS; i_f++) begin
+	for (i_f = 0; i_f < NUM_TESTS; i_f++) begin
         localparam string temp_data = $sformatf("%s%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/", file_pile[i_f]);
         localparam string temp_inst = $sformatf("%s%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/", file_pile[i_f]);
         localparam string temp_refm = $sformatf("%s%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/mem/", file_pile[i_f]);
         
-        // Integers for checking results through the answer key
-        integer i, j, check, done, pass, consecutive_nops;
-        integer total_test_cases = 0;
-        integer print_metrics = 0;
-        
-        // Tracking "highest" data address written to for
-        // displaying only what's needed in the answer key
-        // (since there is no need to display the addresses
-        // not written to)
-        integer max_data_addr;
-        
-        wire [3:0] core_data_write;
-        wire [`DATAMEM_BITS-1:0] core_data_addr;	
-        wire [`DATAMEM_WIDTH-1:0] core_data_store;	
-        wire [`DATAMEM_WIDTH-1:0] core_data_load;
-        wire core_data_request;
-        wire core_data_grant;
-        wire core_data_valid;
-        
-        wire [`PC_ADDR_BITS-1:0] core_inst_addr;
-	    wire [`WORD_WIDTH-1:0] core_inst_data;
-	    wire [`WORD_WIDTH-1:0] core_if_inst;
-        
-        datamem #(
-            .INITIAL_DATA(temp_data)
-        ) DATAMEM (
-            .core_clk(CLK),
-            .con_clk(CLK),
-            .nrst(nrst[i_f]),
-    
-            .dm_write(core_data_write),
-            .data_addr(core_data_addr),        
-            .data_in(core_data_store),
-            .data_req(core_data_request),
-            .data_gnt(core_data_grant),
-            .data_valid(core_data_valid),
-    
-            .con_write(con_write),
-            .con_addr(con_addr[i_f]),
-            .con_in(con_in),
-            .con_en(1'b1),
-    
-            .data_out(core_data_load),
-            .con_out(con_out[i_f])
-        );
-        
-        instmem #(
-           .INSTMEM_PROGRAM(temp_inst)
-        ) INSTMEM (
-            .sel_ISR(1'b0),
-    
-            .addr(core_inst_addr),
-            .inst(core_inst_data)
-        );
-        
-        core_extmem #() CORE(
-            .CLKIP_OUT(CLK),
-            .CLK_BUF(CLK),
-            .nrst(nrst[i_f]),
-    
-            .int_sig(int_sig),
-            
-            .ext_data_write(core_data_write),
-            .ext_data_addr(core_data_addr),        
-            .ext_data_store(core_data_store),
-            .ext_data_load(core_data_load),
-            .ext_data_req(core_data_request),
-            .ext_data_gnt(core_data_grant),
-            .ext_data_valid(core_data_valid),
-            
-            .ext_inst_addr(core_inst_addr),
-	        .ext_inst_data(core_inst_data),
-	        .ext_if_inst(core_if_inst)
-        );
-        answerkey_i #(.REF_OUT(temp_refm)) AK();
-        
-        assign INST[i_f] = core_if_inst;
-        
-        assign box[i_f] = {AK.memory[con_addr[i_f]][7:0], AK.memory[con_addr[i_f]][15:8], AK.memory[con_addr[i_f]][23:16], AK.memory[con_addr[i_f]][31:24]};
-        
-        always@(posedge CLK) begin
-            if (!nrst[i_f]) begin
-                check = 0;
-                consecutive_nops = 0;
-                last_inst[i_f] = 0;
-            end
-            else
-            if (!done)
-                if ((last_inst[i_f][15:0] == 16'h0001 || last_inst[i_f] == 32'h13) && (INST[i_f][15:0] == 16'h0001 || INST[i_f] == 32'h13)) begin
-                    consecutive_nops = consecutive_nops + 1;
-                    check = check + 1;
-                end
-                else if (INST[i_f] == last_inst[i_f]) begin
-                    check = check + 1;
-                end
-                else begin
-                    last_inst[i_f] <= INST[i_f];
-                    consecutive_nops = 0;
-                    check = 0;
-                end
-        end
- 
         initial begin
+            suite_done[i_f] = 0;
+            
+            if (i_f != 0) begin
+                while(suite_done[i_f-1] == 0) begin
+                    #1000;
+                end
+            end
+            
+            i_k = i_f;
+            nrst = 0;
             CLK = 0;
-            nrst[i_f] = 0;
-    
-            int_sig = 0;
-            // BTN = 0;
-            // SW = 0;
-            last_inst[i_f] = 0;
-    
+            last_inst = 0;
             con_write = 0;
-            con_addr[i_f] = 10'h0;
+            con_addr = 10'h0;
+            max_data_addr = 0;
             con_in = 0;
-    
             done = 0;
             check = 0;
             pass = 0;
+            print_metrics = 0;
             i = 0;
             j = 0;
-            suite_done[i_f] = 0;
+            total_test_cases = 0;
             
-            if (i_f == 0)  
-                #100 nrst[i_f] = 1;
+            $readmemh(temp_data, DATAMEM.COREMEM.ram_block);
+            $readmemh(temp_inst, INSTMEM.instmem);
+            $readmemh(temp_refm, AK.memory);
+            
+            #250;
+            nrst = 1;
         end
+    end 
+    // The following code is for checking the contents
+    // of BLOCKMEM
+    
+    always@(posedge CLK) begin
+        if(!nrst)
+            max_data_addr <= 0;
+        else if(!done) 
+            if(core_data_request) begin
+                if (max_data_addr > 255) begin
+                    max_data_addr = 256;
+                end
+                else begin
+                    max_data_addr <= core_data_addr;
+                end
+            end
+    end
+    
+    always@(posedge done) begin
         
-        if (i_f != 0) begin
-            always@(posedge suite_done[i_f-1]) begin
-                nrst[i_f] = 1;
+        $display("%s", test_pile[i_k]);
+        $display("---------| SUMMARY |---------");
+        $display("Address\t  Actual  \tExpected ");
+        $display("=======\t==========\t==========");	
+    end
+    
+    always@(negedge CLK) begin
+        if(done) begin	
+            if(con_out == box) begin
+                //$display("0x%3X\t0x%X\t0x%X\tPass", con_addr, con_out, AK.memory[con_addr]);
+                pass = pass + 1;
+            end else begin
+                if (!print_metrics[i_k]) begin
+                    $display("0x%3X\t0x%X\t0x%X\tFail--------------------", con_addr, con_out, box);
+                end
+            end
+
+            total_test_cases = total_test_cases + 1;
+            con_addr = con_addr + 1;
+            if(con_addr == max_data_addr) print_metrics = 1;
+        end
+    end
+        
+    always@(posedge print_metrics) begin
+        $display("Passed %0d/%0d test cases.\n\n", pass, total_test_cases);
+        suite_done[i_k] = 1;
+        nrst = 0;
+        if (i_k == NUM_TESTS - 1)
+            $finish;
+    end 
+    
+    always@(posedge CLK) begin
+        if (!nrst) begin
+            check = 0;
+            consecutive_nops = 0;
+            last_inst = 0;
+        end
+        else begin
+            if (!done) begin
+                if ((last_inst[15:0] == 16'h0001 || last_inst== 32'h13) && (INST[15:0] == 16'h0001 || INST== 32'h13)) begin
+                    consecutive_nops = consecutive_nops + 1;
+                    check = check + 1;
+                end
+                else if (INST == last_inst) begin
+                    check = check + 1;
+                end
+                else begin
+                    last_inst <= INST;
+                    consecutive_nops = 0;
+                    check = 0;
+                end
             end
         end
-        
-        // This controls max_data_addr
-        always@(posedge CLK) begin
-            if(!nrst[i_f])
-                max_data_addr <= 0;
-            else if(!done) 
-                if((CORE.exe_is_stype && CORE.exe_dm_write && CORE.exe_ALUout[12:2] > max_data_addr) && (CORE.exe_ALUout[12:2] < 11'h400)) begin
-                    if (max_data_addr > 255) begin
-                        max_data_addr = 256;
-                    end
-                    else begin
-                        max_data_addr <= CORE.exe_ALUout[12:2];
-                    end
-                end
-        end
-        
-       // This controls the NOP counter
-        always@(posedge CLK) begin
-           if (!done)
-                if(!nrst[i_f])
-                    nop_counter[i_f] <= 0;
-                else if(!done)
-                    if(INST[i_f][15:0] == 16'h0001 || INST[i_f] == 32'h00000013)
-                        nop_counter[i_f] <= nop_counter[i_f] + 1;
-        end
-        // This controlls the done flag
-        always@(posedge CLK) begin
-            if(check == 50 || consecutive_nops == 8) done = 1;
-        end
-        
-       // The following code is for checking the contents
-        // of BLOCKMEM
-        always@(posedge done) begin
-            
-            $display("%s", test_pile[i_f]);
-            $display("---------| SUMMARY |---------");
-            $display("Address\t  Actual  \tExpected ");
-            $display("=======\t==========\t==========");	
-        end
+    end
     
-        always@(negedge CLK) begin
-            if(done) begin	
-                if(con_out[i_f] == box[i_f]) begin
-                    //$display("0x%3X\t0x%X\t0x%X\tPass", con_addr, con_out, AK.memory[con_addr]);
-                    pass = pass + 1;
-                end else begin
-                    if (!print_metrics) begin
-                        $display("0x%3X\t0x%X\t0x%X\tFail--------------------", con_addr[i_f], con_out[i_f], box[i_f]);
-                    end
-                end
-    
-                total_test_cases = total_test_cases + 1;
-                con_addr[i_f] = con_addr[i_f] + 1;
-                if(con_addr[i_f] == max_data_addr) print_metrics = 1;
-            end
-        end
-        
-        always@(posedge print_metrics) begin
-            $display("Passed %0d/%0d test cases.\n\n", pass, total_test_cases);
-            suite_done[i_f] = 1;
-            nrst[i_f] = 0;
-            if (i_f == NUM_TESTS - 1)
-                $finish;
-        end
+    // This controls the NOP counter
+	always@(posedge CLK) begin
+	   if (!done)
+            if(!nrst)
+                nop_counter <= 0;
+            else if(!done)
+                if(INST[15:0] == 16'h0001 || INST == 32'h00000013)
+                    nop_counter <= nop_counter + 1;
 	end
+	// This controls the done flag
+	always@(posedge CLK) begin
+		if(check == 50 || consecutive_nops == 8) done = 1;
+	end
+	
+	 
+        
 endmodule
 
 // ANSWER KEY

@@ -481,8 +481,7 @@ module tb_core_extmem_single();
 			else $display("Set: %0d\tOverwrites: 0", i);
 			bht_entry_display();
 			$display("------");
-		end */
-		$finish;
+		end */		$finish;
 	end
 endmodule
 
