@@ -33,8 +33,7 @@
 module datamem #(
     parameter INITIAL_DATA = "datamem.mem"
     )(
-	input core_clk,				// Gated clock signal
-	input con_clk,				// un-gated clock signal
+	input clk,         		// un-gated clock signal
 	input nrst,
 
 	// Inputs from the RISCV core
@@ -73,23 +72,19 @@ module datamem #(
 	wire [`DATAMEM_WIDTH-1:0] data_in_little_e = {data_in[7:0], data_in[15:8], data_in[23:16], data_in[31:24]};
 	wire [`DATAMEM_WIDTH-1:0] con_in_little_e = {con_in[7:0], con_in[15:8], con_in[23:16], con_in[31:24]};
 	
-	// temp solution
-	assign data_gnt = 1;
-	assign data_valid = 1;
-
     `ifdef FEATURE_XILINX_DATAMEM_IP_GEN
 	// Datamem that uses BLOCKMEM from Vivado IP Catalog
 	// Blockmem generated as TRUE DUAL PORT RAM
 	// Synchronous read
 	// Addresses 0x000 - 0xFFF (Word-aligned addresses)
 	blk_mem_gen_datamem COREMEM(
-		.clka(core_clk),
+		.clka(clk),
 		.wea(dm_write),
 		.addra(data_addr[`DATAMEM_BITS-2:0]),
 		.dina(data_in_little_e),
 		.douta(coremem_douta),
 
-		.clkb(con_clk),
+		.clkb(clk),
 		.web(4'b0),
 		.addrb(con_addr[`DATAMEM_BITS-2:0]),
 		.dinb(32'b0),
@@ -98,32 +93,35 @@ module datamem #(
 
 	// Addresses 0x1000 - 0x100F	(Word-aligned addresses)
 	blk_mem_gen_protocol PROTOCOLMEM(
-		.clka(core_clk),
+		.clka(clk),
 		.wea(4'b0),
 		.addra(data_addr[3:0]),
 		.dina(32'b0),
 		.douta(protocolmem_douta),
 
-		.clkb(con_clk),
+		.clkb(clk),
 		.web(con_write),
 		.addrb(con_addr[3:0]),
 		.dinb(con_in_little_e),
 		.doutb(protocolmem_doutb)
 	);
 	
+	assign data_gnt = 1;
+	assign data_valid = 1;
+	
 	`else
 	// Manual dual-port RAM
 	dual_port_ram_bytewise_write #(
 	   .INITIAL_DATA(INITIAL_DATA)
 	) COREMEM (
-		.clkA(core_clk),
+		.clkA(clk),
 		.enaA(1'b1),
 		.weA(dm_write),
 		.addrA(data_addr[`DATAMEM_BITS-2:0]),
 		.dinA(data_in_little_e),
 		.doutA(coremem_douta),
 
-		.clkB(con_clk),
+		.clkB(clk),
 		.enaB(1'b1),
 		.weB(4'b0),
 		.addrB(con_addr[`DATAMEM_BITS-2:0]),
@@ -135,20 +133,42 @@ module datamem #(
 	   .INITIAL_DATA("answerkey.mem"),
 	   .ADDR_WIDTH(4)
 	) PROTOCOLMEM(
-		.clkA(core_clk),
+		.clkA(clk),
 		.enaA(1'b1),
 		.weA(4'b0),
 		.addrA(data_addr[3:0]),
 		.dinA(32'b0),
 		.doutA(protocolmem_douta),
 
-		.clkB(con_clk),
+		.clkB(clk),
 		.enaB(1'b1),
 		.weB(con_write),
 		.addrB(con_addr[3:0]),
 		.dinB(con_in_little_e),
 		.doutB(protocolmem_doutb)
 	);
+	
+	// ideal memory (1-cycle delay)
+	   reg data_gnt_reg;
+	   assign data_gnt = data_gnt_reg;
+	   reg data_valid_reg;
+	   assign data_valid = data_valid_reg;
+	   always@(posedge clk) begin
+	       if (!nrst) begin
+	           data_gnt_reg <= 0;
+	           data_valid_reg <= 0;
+	       end
+	       else begin
+	           if (data_req) begin
+                   data_gnt_reg <= 1;
+                   data_valid_reg <= 1;
+	           end
+	           else begin
+	               data_gnt_reg <= 0;
+                   data_valid_reg <= 0;
+	           end
+	       end
+	   end
 	`endif
 	
 	// Other Peripherals
@@ -158,7 +178,7 @@ module datamem #(
 
 	// Assigning data_out for the Core
 	reg core_sel_reg = 0;
-	always@(posedge core_clk) begin
+	always@(posedge clk) begin
 		if(!nrst) begin
 		      core_sel_reg <= 0;
 		      num_cycles_addr_reg <= 1'b0;
@@ -174,7 +194,7 @@ module datamem #(
 
 	// Assigning con_out
 	reg protocol_sel_reg = 0;
-	always@(posedge con_clk) begin
+	always@(posedge clk) begin
 		if(!nrst) begin
 		      protocol_sel_reg <= 0;
 		      num_cycles <= `WORD_WIDTH'd0;

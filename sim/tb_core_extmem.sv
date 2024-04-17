@@ -215,8 +215,7 @@ module tb_core_extmem();
     wire [`WORD_WIDTH-1:0] core_if_inst;
     
     datamem #() DATAMEM (
-        .core_clk(CLK),
-        .con_clk(CLK),
+        .clk(CLK),
         .nrst(nrst),
 
         .dm_write(core_data_write),
