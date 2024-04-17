@@ -3,7 +3,7 @@
 `include "constants.vh"
 `include "config.vh"
 
-module tb_core_extmem();
+module tb_core_extmem_new();
 
     parameter NUM_TESTS = 76;
     string test_pile[NUM_TESTS] = '{
@@ -344,7 +344,7 @@ module tb_core_extmem();
                 //$display("0x%3X\t0x%X\t0x%X\tPass", con_addr, con_out, AK.memory[con_addr]);
                 pass = pass + 1;
             end else begin
-                if (!print_metrics[i_k]) begin
+                if (!print_metrics) begin
                     $display("0x%3X\t0x%X\t0x%X\tFail--------------------", con_addr, con_out, box);
                 end
             end
