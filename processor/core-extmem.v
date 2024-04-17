@@ -22,7 +22,7 @@
 `include "constants.vh"
 `include "config.vh"
 
-module core_extmem #() (
+module core_extmem (
 	input CLKIP_OUT,			// 50MHz unbuffered clock
 	input CLK_BUF,				// 50MHz buffered clock
 	input nrst,
@@ -900,28 +900,6 @@ module core_extmem #() (
     wire mem_dm_en;
     wire [`DATAMEM_BITS:0] mem_dm_addr;
     
-    /*
-	datamem #(
-	   .INITIAL_DATA(DATA_I)
-	) DATAMEM (
-		.core_clk(mem_clk),
-		.con_clk(CLK_BUF),
-		.nrst(nrst),
-
-		.dm_write(exe_dm_write),
-		.data_addr(mem_dm_addr),        
-		.data_in(exe_storedata),
-		.data_en(mem_dm_en),
-
-		.con_write(con_write),
-		.con_addr(con_addr),
-		.con_in(con_in),
-		.con_en(1'b1),
-
-		.data_out(mem_DATAMEMout),
-		.con_out(con_out)
-	);
-	*/
 	assign ext_data_write = exe_dm_write;
 	assign ext_data_addr = mem_dm_addr;	
 	assign ext_data_store = exe_storedata;	

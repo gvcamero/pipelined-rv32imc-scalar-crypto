@@ -3,7 +3,7 @@
 `include "constants.vh"
 `include "config.vh"
 
-module tb_core_extmem_new();
+module tb_core_extmem();
 
     parameter NUM_TESTS = 76;
     string test_pile[NUM_TESTS] = '{
