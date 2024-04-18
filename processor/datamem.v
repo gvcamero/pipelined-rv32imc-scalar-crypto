@@ -31,7 +31,9 @@
 `include "config.vh"
 
 module datamem #(
-    parameter INITIAL_DATA = "datamem.mem"
+    parameter INITIAL_DATA = "datamem.mem",
+    parameter GRANT_DELAY = 0,              // delay before granting memory access
+    parameter VALID_DELAY = 0              // delay before read operation finishes after grant
     )(
 	input clk,         		// un-gated clock signal
 	input nrst,
@@ -147,28 +149,27 @@ module datamem #(
 		.dinB(con_in_little_e),
 		.doutB(protocolmem_doutb)
 	);
-	
-	// ideal memory (1-cycle delay)
-	   reg data_gnt_reg;
-	   assign data_gnt = data_gnt_reg;
-	   reg data_valid_reg;
-	   assign data_valid = data_valid_reg;
-	   always@(posedge clk) begin
-	       if (!nrst) begin
-	           data_gnt_reg <= 0;
-	           data_valid_reg <= 0;
-	       end
-	       else begin
-	           if (data_req) begin
-                   data_gnt_reg <= 1;
-                   data_valid_reg <= 1;
-	           end
-	           else begin
-	               data_gnt_reg <= 0;
-                   data_valid_reg <= 0;
-	           end
-	       end
-	   end
+	   
+	   
+    mem_protocol_handler DM_Handler (
+        .clk(clk),
+        .nrst(nrst),
+        
+        .addr_in(data_addr),
+        .addr(),
+        
+        .read_in(data_in_little_e),
+        .read(),
+        
+        .wren(data_wren),
+        .op(),
+        .wren_out(),
+        
+        .req(data_req),
+        .gnt(data_gnt),
+        .valid(data_valid)
+    );
+	   
 	`endif
 	
 	// Other Peripherals
