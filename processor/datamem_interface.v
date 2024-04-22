@@ -87,6 +87,27 @@ module datamem_interface(
 		.dm_select(lb_dm_select),
 		.loaddata(lb_loaddata)
 	);
+
+    mem_protocol_driver MPH(
+        .clk(clk),
+        .nrst(nrst),
+        .issue_op(is_mem_op),
+        // .busy(dm_stall),
+        .ready()
+        .issue_addr(addr_in),
+        // .addr_out(addr_out),
+        .read_in(lb_data),
+        .load_out(),
+        .store_in(sb_dm_write_t),
+        .store_out(),
+
+        .wren(sb_dm_write),
+        .wren_out(),
+
+        .req(dm_req),
+        .gnt(dm_gnt),
+        .valid(dm_valid)
+    );
 	
 	// DATA
 	always@(posedge clk) begin

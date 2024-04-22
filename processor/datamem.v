@@ -41,7 +41,7 @@ module datamem #(
 	// Inputs from the RISCV core
 	input [3:0] dm_write,
 	input [`DATAMEM_BITS-1:0] data_addr,
-	input [`DATAMEM_WIDTH-1:0] data_in,
+	input [`WORD_WIDTH-1:0] data_in,
 	
 	// Transactional I/O
 	input data_valid,
@@ -52,17 +52,17 @@ module datamem #(
 	// NOTE: protocol controllers cannot read from FPGAIO
 	input [3:0] con_write,				// Similar to dm_write
 	input [`DATAMEM_BITS-1:0] con_addr,	// datamem address from protocol controller
-	input [`DATAMEM_WIDTH-1:0] con_in,	// data input from protocol controller
+	input [`WORD_WIDTH-1:0] con_in,	// data input from protocol controller
 	input con_en,
 
 	// Outputs
-	output [`DATAMEM_WIDTH-1:0] data_out,	// data output to the RISC-V core
-	output [`DATAMEM_WIDTH-1:0] con_out		// data output to protocol controller
+	output [`WORD_WIDTH-1:0] data_out,	// data output to the RISC-V core
+	output [`WORD_WIDTH-1:0] con_out		// data output to protocol controller
 );
 	
 	// Block memory outputs
-	wire [`DATAMEM_WIDTH-1:0] coremem_douta, coremem_doutb;
-	wire [`DATAMEM_WIDTH-1:0] protocolmem_douta, protocolmem_doutb;
+	wire [`WORD_WIDTH-1:0] coremem_douta, coremem_doutb;
+	wire [`WORD_WIDTH-1:0] protocolmem_douta, protocolmem_doutb;
 
 	// Determine which blockmem output to select
 	// If x_sel = 1, select PROTOCOLMEM output, else select COREMEM output
@@ -71,8 +71,8 @@ module datamem #(
 	
 	// Inputs are big-endian words
 	// This part converts them to little-endian format
-	wire [`DATAMEM_WIDTH-1:0] data_in_little_e = {data_in[7:0], data_in[15:8], data_in[23:16], data_in[31:24]};
-	wire [`DATAMEM_WIDTH-1:0] con_in_little_e = {con_in[7:0], con_in[15:8], con_in[23:16], con_in[31:24]};
+	wire [`WORD_WIDTH-1:0] data_in_little_e = {data_in[7:0], data_in[15:8], data_in[23:16], data_in[31:24]};
+	wire [`WORD_WIDTH-1:0] con_in_little_e = {con_in[7:0], con_in[15:8], con_in[23:16], con_in[31:24]};
 	
     `ifdef FEATURE_XILINX_DATAMEM_IP_GEN
 	// Datamem that uses BLOCKMEM from Vivado IP Catalog
@@ -112,15 +112,20 @@ module datamem #(
 	assign data_valid = 1;
 	
 	`else
+
+	wire [`WORD_WIDTH-1:0] data_addr_t;
+	wire [`WORD_WIDTH-1:0] data_out_t;
+	wire [3:0] data_wren_t;
+
 	// Manual dual-port RAM
 	dual_port_ram_bytewise_write #(
 	   .INITIAL_DATA(INITIAL_DATA)
 	) COREMEM (
 		.clkA(clk),
 		.enaA(1'b1),
-		.weA(dm_write),
-		.addrA(data_addr[`DATAMEM_BITS-2:0]),
-		.dinA(data_in_little_e),
+		.weA(data_wren_t),
+		.addrA(data_addr_t[`DATAMEM_BITS-2:0]),
+		.dinA(data_write_t),
 		.doutA(coremem_douta),
 
 		.clkB(clk),
@@ -138,7 +143,7 @@ module datamem #(
 		.clkA(clk),
 		.enaA(1'b1),
 		.weA(4'b0),
-		.addrA(data_addr[3:0]),
+		.addrA(data_addr_t[3:0]),
 		.dinA(32'b0),
 		.doutA(protocolmem_douta),
 
@@ -156,14 +161,14 @@ module datamem #(
         .nrst(nrst),
         
         .addr_in(data_addr),
-        .addr(),
+        .addr(data_addr_t),
         
-        .read_in(data_in_little_e),
-        .read(),
+        .read_in(data_out),
+        .read(data_out_t),
         
         .wren(data_wren),
         .op(),
-        .wren_out(),
+        .wren_out(data_wren_t),
         
         .req(data_req),
         .gnt(data_gnt),
@@ -205,6 +210,6 @@ module datamem #(
 		      num_cycles <= num_cycles + `WORD_WIDTH'd1;
 	    end
 	end
-	wire [`DATAMEM_WIDTH-1:0] con_out_little_e = protocol_sel_reg? protocolmem_doutb : coremem_doutb;
+	wire [`WORD_WIDTH-1:0] con_out_little_e = protocol_sel_reg? protocolmem_doutb : coremem_doutb;
 	assign con_out = {con_out_little_e[7:0], con_out_little_e[15:8], con_out_little_e[23:16], con_out_little_e[31:24]};
 endmodule

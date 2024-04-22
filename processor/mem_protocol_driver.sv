@@ -1,6 +1,173 @@
 `timescale 1ns / 1ps
+`include "constants.vh"
+`include "config.vh"
 
 module mem_protocol_driver (
+    input clk,
+    input nrst,
+
+    // Interface Control Signals
+    input issue_op,
+    output busy,
+    output ready,                   // ready to read from load output
+
+    // Memory I/O
+    input [`DATAMEM_BITS-1:0] issue_addr,
+    output reg [`DATAMEM_BITS-1:0] addr_out,
+    
+    input [`WORD_WIDTH-1:0] read_in,
+    output reg [`WORD_WIDTH-1:0] load_out,
+
+    input [`WORD_WIDTH-1:0] store_in,
+    output reg [`WORD_WIDTH-1:0] write_out,
+    
+    input [3:0] wren, 
+    output reg [3:0] wren_out,
         
+    // Memory Control Signals
+    output reg req,
+    input gnt,
+    input valid
     );
+
+    reg [`DATAMEM_BITS-1:0] addr_buffer;
+    reg [`WORD_WIDTH-1:0] load_buffer;
+    reg [`WORD_WIDTH-1:0] write_buffer;
+    reg [3:0] wren_buffer;
+    reg op_buffer;
+
+    reg [2:0] mem_state;
+
+    localparam MEM_START = 3'h0;
+    localparam MEM_WAIT_LOAD = 3'h1;
+    localparam MEM_GRANT_LOAD = 3'h2;
+    localparam MEM_VALID_LOAD = 3'h3;
+    localparam MEM_WAIT_STORE = 3'h4;
+    localparam MEM_GRANT_STORE = 3'h5;
+    // localparam MEM_CLEANUP = 3'h7;
+
+    wire op_type = (wren == 3'd0);
+    
+    localparam OP_LOAD = 1'b1;
+    localparam OP_STORE = 1'b0;
+
+    assign busy = (mem_state != MEM_START);
+    assign ready = (mem_state == MEM_VALID_LOAD);
+
+    always@(posedge clk) begin
+        if(!nrst) begin
+            addr_buffer <= 0;
+            load_buffer <= 0;
+            write_buffer <= 0;
+            wren_buffer <= 4'd0;
+            req <= 0;
+
+            mem_state <= MEM_START;
+        end
+        else begin
+            case(mem_state)
+                MEM_START: begin
+                    if (issue_op) begin
+                        addr_buffer <= addr_in;
+                        load_buffer <= 0;
+                        req <= 1;
+
+                        if (op_type == OP_LOAD) begin
+                            write_buffer <= 0;
+                            wren_buffer <= 4'd0;
+                            mem_state <= MEM_WAIT_LOAD;
+                        end
+                        else begin
+                            write_buffer <= store_in;
+                            wren_buffer <= wren;
+                            mem_state <= MEM_WAIT_STORE;
+                        end
+                    end
+                    else begin
+                        addr_buffer <= 0;
+                        load_buffer <= 0;
+                        write_buffer <= 0;
+                        wren_buffer <= 4'd0;
+                        req <= 0;
+
+                        mem_state <= MEM_START;
+                    end
+                end
+                MEM_WAIT_LOAD: begin
+                    write_buffer <= 0;
+                    wren_buffer <= 4'd0;
+                    if (gnt) begin
+                        req <= 0;
+                        addr_buffer <= 0;
+                        if (valid) begin
+                            // Ideal load case for testbench
+                            load_buffer <= read_in;
+                            mem_state <= MEM_VALID_LOAD;
+                        end
+                        else begin
+                            load_buffer <= 0;
+                            mem_state <= MEM_GRANT_LOAD;
+                        end
+                    end
+                    else begin
+                        addr_buffer <= addr_buffer;
+                        load_buffer <= 0;
+                        req <= 1;
+                        mem_state <= MEM_WAIT_LOAD;
+                    end
+                end
+                MEM_GRANT_LOAD: begin
+                    write_buffer <= 0;
+                    wren_buffer <= 4'd0;
+                    req <= 0;
+                    addr_buffer <= 0;
+                    
+                    if (valid) begin
+                        load_buffer <= read_in;
+                        mem_state <= MEM_VALID_LOAD;
+                    end
+                    else begin
+                        load_buffer <= 0;
+                        mem_state <= MEM_GRANT_LOAD;
+                    end
+                end
+                MEM_VALID_LOAD: begin
+                    addr_buffer <= 0;
+                    load_buffer <= 0;
+                    write_buffer <= 0;
+                    wren_buffer <= 4'd0;
+                    req <= 0;
+
+                    mem_state <= MEM_START;
+                end
+                MEM_WAIT_STORE: begin
+                    if (gnt) begin
+                        write_buffer <= 0;
+                        wren_buffer <= 0;
+                        addr_buffer <= 0;
+                        req <= 1;
+                        load_buffer <= 0;
+                        mem_state <= MEM_START;
+                    end
+                    else begin
+                        write_buffer <= write_buffer;
+                        wren_buffer <= wren_buffer;
+                        addr_buffer <= addr_buffer;
+                        req <= 1;
+                        load_buffer <= 0;
+                        mem_state <= MEM_WAIT_STORE;
+                    end
+                end
+                default: begin
+                    addr_buffer <= 0;
+                    load_buffer <= 0;
+                    write_buffer <= 0;
+                    wren_buffer <= 4'd0;
+                    req <= 0;
+
+                    mem_state <= MEM_START;
+                end
+            endcase
+        end
+    end
 endmodule

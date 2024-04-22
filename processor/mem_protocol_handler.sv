@@ -39,7 +39,7 @@ module mem_protocol_handler #(
     localparam MEM_RESP_READ = 3'h3;
     localparam MEM_RESP_WRITE = 3'h7;
     
-    write op_type = (wren != 3'd0);
+    wire op_type = (wren != 3'd0);
     
     localparam OP_WRITE = 1'b1;
     localparam OP_READ = 1'b0;
