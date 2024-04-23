@@ -238,24 +238,22 @@ module sf_controller(
     
     wire exe_jalr_hazard = hzd_exe_to_id_A && id_sel_opBR;							// LOAD -> JALR (EXE stage) will result in a one-cycle stall for IF and ID stages
     wire mem_jalr_hazard = hzd_mem_to_id_A && id_sel_opBR;                          // LOAD -> JALR (MEM stage) will result in a one-cycle stall for IF,ID, and EXE stages
-    assign load_hazard = (hzd_mem_to_exe_A || hzd_mem_to_exe_B) && !mem_prev_flush;	// LOAD -> Other instruction
-    /* load_hazard result:
-        1st cycle: no clock for IF, ID, EXE stage registers
-        2nd cycle: no clock for WB stage registers
-        3rd cycle: no clock for RF writeback
+    assign load_hazard = (hzd_mem_to_exe_A || hzd_mem_to_exe_B);                	// LOAD -> Other instruction
+    /* 
+        Load hazard: wait until load instruction leaves MEM stage
     */
     
     // Stalls/Enables
-    assign if_stall = ((load_hazard  && ~mem_prev_flush) || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || dmem_stall || ~if_ready);
-    assign id_stall = ((load_hazard  && ~mem_prev_flush) || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || dmem_stall);
-    wire exe_stall = ((load_hazard  && ~mem_prev_flush) || mem_jalr_hazard || div_running || mul_stall || dmem_stall);
+    assign if_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || dmem_stall || ~if_ready);
+    assign id_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || dmem_stall);
+    wire exe_stall = (load_hazard || mem_jalr_hazard || div_running || mul_stall || dmem_stall);
     wire mem_stall = dmem_stall;					
 
     // Flushes/Resets
     assign if_flush = ISR_PC_flush;
     assign id_flush = (ISR_pipe_flush || jump_flush || branch_flush) || !if_ready;
     assign exe_flush = exe_jalr_hazard || branch_flush || (is_nop && ~(load_hazard  && ~mem_prev_flush));
-    assign mem_flush = (load_hazard && ~mem_prev_flush) || div_running || mul_stall;	// flushing the MEM-stage for two straight cycles is disabled for forwarding reasons
+    assign mem_flush = (div_running || mul_stall);	// flushing the MEM-stage for two straight cycles is disabled for forwarding reasons
     assign wb_flush = 1'b0;
 
     // Enables

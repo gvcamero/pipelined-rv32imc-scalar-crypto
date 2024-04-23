@@ -932,7 +932,7 @@ module core_extmem (
          .dm_valid(ext_data_valid),
          
          .dm_stall(mem_dm_stall),
-         .dm_ready(mem_dm_ready)
+         .read_ready(mem_dm_ready)
 	);
 
 	pipereg_mem_wb MEM_WB(

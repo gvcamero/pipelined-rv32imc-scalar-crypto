@@ -84,7 +84,7 @@ module datamem_interface(
 	);
 	
 	loadblock LOADBLOCK(
-		.data(lb_data_reg),
+		.data(lb_data_t),
 		.byte_offset(lb_byte_offset),
 		.dm_select(lb_dm_select),
 		.loaddata(lb_loaddata)
