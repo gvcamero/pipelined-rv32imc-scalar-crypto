@@ -9,7 +9,7 @@ module mem_protocol_driver (
     // Interface Control Signals
     input issue_op,
     output busy,
-    output ready,                   // ready to read from load output
+    output reg ready,                   // ready to read from load output
 
     // Memory I/O
     input [`DATAMEM_BITS-1:0] issue_addr,
@@ -51,7 +51,7 @@ module mem_protocol_driver (
     localparam OP_STORE = 1'b0;
 
     assign busy = (mem_state != MEM_START);
-    assign ready = (mem_state == MEM_VALID_LOAD);
+    // assign ready = (mem_state == MEM_VALID_LOAD);
     
     assign addr_out = addr_buffer;
     assign load_out = load_buffer;
@@ -171,6 +171,42 @@ module mem_protocol_driver (
 
                     mem_state <= MEM_START;
                 end
+            endcase
+        end
+    end
+    
+    always@(posedge clk) begin
+        if (!nrst) begin
+            ready <= 0;
+        end
+        else begin
+            case(mem_state)
+                MEM_WAIT_LOAD: begin
+                    if (valid) begin
+                        ready <= 1;
+                    end
+                    else begin
+                        ready <= 0;
+                    end
+                end
+                MEM_GRANT_LOAD: begin
+                    if (valid) begin
+                        ready <= 1;
+                    end
+                    else begin
+                        ready <= 0;
+                    end
+                end
+                MEM_WAIT_STORE: begin
+                    if (gnt) begin
+                        ready <= 1;
+                    end
+                    else begin
+                        ready <= 0;
+                    end
+                end
+                default:
+                    ready <= 0;
             endcase
         end
     end

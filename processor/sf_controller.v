@@ -247,7 +247,7 @@ module sf_controller(
     assign if_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || dmem_stall || ~if_ready);
     assign id_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || dmem_stall);
     wire exe_stall = (load_hazard || mem_jalr_hazard || div_running || mul_stall || dmem_stall);
-    wire mem_stall = dmem_stall;					
+    wire mem_stall = (load_hazard && ~dmem_ready) || dmem_stall;					
 
     // Flushes/Resets
     assign if_flush = ISR_PC_flush;

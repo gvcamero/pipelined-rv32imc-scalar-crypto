@@ -84,6 +84,7 @@ module tb_core_extmem();
         "REM",
         "REMU"
     };
+    string current_test = "";
     parameter string file_pile[NUM_TESTS] = {
         "C-ADD.mem",
         "C-ADDI.mem",
@@ -289,6 +290,7 @@ module tb_core_extmem();
                 end
             end
             
+            current_test = test_pile[i_f];
             i_k = i_f;
             nrst = 0;
             CLK = 0;

@@ -29,6 +29,8 @@ module datamem_interface(
         input dm_gnt,
         input dm_valid,
         
+        // Core Control I/O
+        input stall,
         output read_ready
         /*
         // Control Outputs
@@ -72,8 +74,17 @@ module datamem_interface(
     
     wire is_mem_op = sb_is_stype || sel_data == 3'd3;
     
+    reg hold;
     
-    
+    always@(posedge clk) begin
+        if (!nrst)
+            hold <= 0;
+        else if (dm_stall)
+            hold <= 1;
+        else
+            hold <= 0;
+    end
+        
     storeblock STOREBLOCK(
 		.opB(sb_opB),
 		.byte_offset(sb_byte_offset),
@@ -94,7 +105,7 @@ module datamem_interface(
         .clk(clk),
         .nrst(nrst),
         
-        .issue_op(is_mem_op),
+        .issue_op(is_mem_op && ~hold),
         .busy(dm_stall),
         .ready(read_ready),
         
@@ -114,95 +125,4 @@ module datamem_interface(
         .gnt(dm_gnt),
         .valid(dm_valid)
     );
-	
-	/*
-	// DATA
-	always@(posedge clk) begin
-	   if (!nrst) begin
-	       state <= STATE_NONE;
-	       
-           sb_data_reg <= 32'h0;
-           sb_dm_write_reg <= 4'h0;
-           addr_out_reg <= 32'h0;
-           dm_en_reg <= 1'b0;
-           lb_data_reg <= 32'd0;
-           dm_ready_reg <= 1'b0;
-       end
-       
-       else begin
-            case(state)
-                // No current memory op
-                STATE_NONE: begin
-                    if (is_mem_op) begin
-                        // Issue operation
-                        dm_en_reg <= 1'b1;
-                        addr_out_reg <= addr_in;
-                        
-                        // LOADS take precedence
-                        if (sel_data == 3'd3) begin
-                            state <= STATE_ISSUE_LOAD;
-                            sb_data_reg <= 32'h0;
-                            sb_dm_write_reg <= 4'h0;
-                        end
-                        else begin
-                            state <= STATE_FINISH;
-                            sb_data_reg <= sb_data_t;
-                            sb_dm_write_reg <= sb_dm_write_t;
-                        end
-                    end
-                    else begin
-                        state <= STATE_NONE;
-                       
-                        sb_data_reg <= 32'h0;
-                        sb_dm_write_reg <= 4'h0;
-                        addr_out_reg <= 32'h0;
-                        dm_en_reg <= 1'b0;
-                    end
-                    lb_data_reg <= 32'd0;
-                    dm_ready_reg <= 1'b0;
-                end
-                
-                // Active load op
-                STATE_ISSUE_LOAD: begin
-                   state <= STATE_FINISH;
-                   
-                   sb_data_reg <= 32'h0;
-                   sb_dm_write_reg <= 4'h0;
-                   addr_out_reg <= 32'h0;
-                   dm_en_reg <= 1'b0;
-                   lb_data_reg <= lb_data;
-                   dm_ready_reg <= 1'b0;
-                end
-                
-                // Active store op
-                // currently unused
-                STATE_ISSUE_STORE: begin
-                   state <= STATE_NONE;
-                   
-                   sb_data_reg <= 32'h0;
-                   sb_dm_write_reg <= 4'h0;
-                   addr_out_reg <= 32'h0;
-                   dm_en_reg <= 1'b0;
-                   lb_data_reg <= 32'd0;
-                   dm_ready_reg <= 1'b0;
-                end
-                
-                // Finishing op
-                STATE_FINISH: begin
-                   if (!mem_flush)
-                        state <= STATE_NONE;
-                   else
-                        state <= STATE_FINISH;
-                   
-                   sb_data_reg <= 32'h0;
-                   sb_dm_write_reg <= 4'h0;
-                   addr_out_reg <= 32'h0;
-                   dm_en_reg <= 1'b0;
-                   lb_data_reg <= 32'd0;
-                   dm_ready_reg <= 1'b0;
-                end
-            endcase
-       end
-    end
-    */
 endmodule
