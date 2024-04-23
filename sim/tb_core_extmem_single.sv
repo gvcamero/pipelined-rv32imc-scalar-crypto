@@ -31,6 +31,7 @@ module tb_core_extmem_single();
     
     wire [`PC_ADDR_BITS-1:0] core_inst_addr;
     wire [`WORD_WIDTH-1:0] core_inst_data;
+	wire [`WORD_WIDTH-1:0] core_if_inst;
     
     datamem #(
     .INITIAL_DATA(temp_data)
@@ -80,7 +81,8 @@ module tb_core_extmem_single();
         .ext_data_valid(core_data_valid),
         
         .ext_inst_addr(core_inst_addr),
-        .ext_inst_data(core_inst_data)
+        .ext_inst_data(core_inst_data),
+		.ext_if_inst(core_if_inst)
     );
     
     wire [31:0] box;
