@@ -14,10 +14,13 @@ module mem_protocol_handler #(
     
     input [`WORD_WIDTH-1:0] read_in,
     output reg [`WORD_WIDTH-1:0] read,
+
+    input [`WORD_WIDTH-1:0] write_in,
+    output reg [`WORD_WIDTH-1:0] write,
     
-    input [3:0] wren, 
+    input [3:0] wren_in, 
     output reg op,
-    output reg [3:0] wren_out,
+    output reg [3:0] wren,
            
     input req,
     output reg gnt,
@@ -27,6 +30,7 @@ module mem_protocol_handler #(
     reg [`DATAMEM_BITS-1:0] addr_buffer;
     reg op_buffer;
     reg [`WORD_WIDTH-1:0] read_buffer;
+    reg [`WORD_WIDTH-1:0] write_buffer;
     reg [3:0] wren_buffer;
     
     reg [7:0] gnt_delay_r, val_delay_r;
@@ -39,7 +43,7 @@ module mem_protocol_handler #(
     localparam MEM_RESP_READ = 3'h3;
     localparam MEM_RESP_WRITE = 3'h7;
     
-    wire op_type = (wren != 3'd0);
+    wire op_type = (wren_in != 3'd0);
     
     localparam OP_WRITE = 1'b1;
     localparam OP_READ = 1'b0;
@@ -64,7 +68,8 @@ module mem_protocol_handler #(
         if (val_delay_r == 0) begin
             // Ideal memory
             read = read_in;
-            wren_out = 0;
+            wren = 0;
+            write = 0;
             if (mem_state == MEM_START) begin
                 addr = addr_in;
                 op = op_type;           // redo
@@ -78,10 +83,14 @@ module mem_protocol_handler #(
             addr = addr_buffer;
             op = op_buffer;             // redo
             read = read_buffer;
-            if (mem_state == MEM_RESP_WRITE)
-                wren_out = wren_buffer;
-            else
-                wren_out = 0;
+            if (mem_state == MEM_RESP_WRITE) begin
+                wren = wren_buffer;
+                write_out = write_buffer;
+            end
+            else begin
+                wren = 0;
+                write_out = 0;
+            end
         end
     end
     
@@ -90,6 +99,7 @@ module mem_protocol_handler #(
             addr_buffer <= 0;
             op_buffer <= 0;
             read_buffer <= 0;
+            write_buffer <= 0;
             wren_buffer <= 4'd0;
             
             gnt <= 0;
@@ -105,7 +115,8 @@ module mem_protocol_handler #(
                         // try request
                         addr_buffer <= addr_in;
                         op_buffer <= op_type;
-                        wren_buffer <= wren;
+                        wren_buffer <= wren_in;
+                        write_buffer <= write_in;
                         read_buffer <= 0;
                         
                         sim_delay <= sim_delay + 1;
@@ -144,6 +155,7 @@ module mem_protocol_handler #(
                         addr_buffer <= 0;
                         op_buffer <= 0;
                         read_buffer <= 0;
+                        write_buffer <= 0;
                         wren_buffer <= 0;
                         
                         gnt <= 0;
@@ -162,6 +174,7 @@ module mem_protocol_handler #(
                         addr_buffer <= addr_buffer;
                         op_buffer <= op_buffer;
                         wren_buffer <= wren_buffer;
+                        write_buffer <= write_in;
                         read_buffer <= 0;
                         
                         if (sim_delay > gnt_delay_r) begin
@@ -194,6 +207,7 @@ module mem_protocol_handler #(
                         addr_buffer <= 0;
                         op_buffer <= 0;
                         read_buffer <= 0;
+                        write_buffer <= 0;
                         wren_buffer <= 0;
                         
                         gnt <= 0;
@@ -210,6 +224,7 @@ module mem_protocol_handler #(
                     sim_delay <= sim_delay + 1;
                     addr_buffer <= addr_buffer;
                     op_buffer <= op_buffer;
+                    write_buffer <= write_in;
                     wren_buffer <= 0;
                     
                     gnt <= 0;
@@ -229,6 +244,7 @@ module mem_protocol_handler #(
                     addr_buffer <= 0;
                     op_buffer <= 0;
                     read_buffer <= 0;
+                    write_buffer <= 0;
                     wren_buffer <= 0;
                     
                     gnt <= 0;
@@ -243,6 +259,7 @@ module mem_protocol_handler #(
                     addr_buffer <= 0;
                     op_buffer <= 0;
                     read_buffer <= 0;
+                    write_buffer <= 0;
                     wren_buffer <= 0;
                     
                     gnt <= 0;
@@ -256,6 +273,7 @@ module mem_protocol_handler #(
                     addr_buffer <= 0;
                     op_buffer <= 0;
                     read_buffer <= 0;
+                    write_buffer <= 0;
                     wren_buffer <= 0;
                         
                     gnt <= 0;

@@ -165,10 +165,12 @@ module datamem #(
         
         .read_in(data_out),
         .read(data_out_t),
+
+		.write_in(data_in_little_e),
+		.write(data_write_t),
         
-        .wren(data_wren),
-        .op(),
-        .wren_out(data_wren_t),
+        .wren_in(data_wren),
+        .wren(data_wren_t),
         
         .req(data_req),
         .gnt(data_gnt),
