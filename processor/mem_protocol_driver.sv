@@ -34,7 +34,6 @@ module mem_protocol_driver (
     reg [`WORD_WIDTH-1:0] load_buffer;
     reg [`WORD_WIDTH-1:0] write_buffer;
     reg [3:0] wren_buffer;
-    reg op_buffer;
 
     reg [2:0] mem_state;
 
@@ -53,6 +52,11 @@ module mem_protocol_driver (
 
     assign busy = (mem_state != MEM_START);
     assign ready = (mem_state == MEM_VALID_LOAD);
+    
+    assign addr_out = addr_buffer;
+    assign load_out = load_buffer;
+    assign write_out = write_buffer;
+    assign wren_out = wren_buffer;
 
     always@(posedge clk) begin
         if(!nrst) begin
@@ -68,7 +72,7 @@ module mem_protocol_driver (
             case(mem_state)
                 MEM_START: begin
                     if (issue_op) begin
-                        addr_buffer <= addr_in;
+                        addr_buffer <= issue_addr;
                         load_buffer <= 0;
                         req <= 1;
 
@@ -145,7 +149,7 @@ module mem_protocol_driver (
                         write_buffer <= 0;
                         wren_buffer <= 0;
                         addr_buffer <= 0;
-                        req <= 1;
+                        req <= 0;
                         load_buffer <= 0;
                         mem_state <= MEM_START;
                     end

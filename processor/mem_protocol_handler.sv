@@ -68,8 +68,8 @@ module mem_protocol_handler #(
         if (val_delay_r == 0) begin
             // Ideal memory
             read = read_in;
-            wren = 0;
-            write = 0;
+            wren = wren_buffer;
+            write = write_buffer;
             if (mem_state == MEM_START) begin
                 addr = addr_in;
                 op = op_type;           // redo
@@ -85,11 +85,11 @@ module mem_protocol_handler #(
             read = read_buffer;
             if (mem_state == MEM_RESP_WRITE) begin
                 wren = wren_buffer;
-                write_out = write_buffer;
+                write = write_buffer;
             end
             else begin
                 wren = 0;
-                write_out = 0;
+                write = 0;
             end
         end
     end

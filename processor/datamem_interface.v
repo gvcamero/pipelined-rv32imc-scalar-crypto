@@ -28,7 +28,8 @@ module datamem_interface(
         output dm_req,
         input dm_gnt,
         input dm_valid,
-        output dm_ready
+        
+        output read_ready
         /*
         // Control Outputs
         output dm_stall,
@@ -50,23 +51,24 @@ module datamem_interface(
     
     localparam STATE_FINISH = 3'd7; 
     
-    reg [31:0] lb_data_reg;
+    // reg [31:0] lb_data_reg;
+    wire [31:0] lb_data_t;
     
     wire [31:0] sb_data_t;
-    reg [31:0] sb_data_reg;
-    assign sb_data = sb_data_reg;
+    // reg [31:0] sb_data_reg;
+    // assign sb_data = sb_data_reg;
     wire [3:0] sb_dm_write_t;
-    reg [3:0] sb_dm_write_reg;
-    assign sb_dm_write = sb_dm_write_reg;
-    reg [`DATAMEM_BITS-1:0] addr_out_reg;
-    assign addr_out = addr_out_reg;
-    reg dm_en_reg;
-    assign dm_req = dm_en_reg;
+    // reg [3:0] sb_dm_write_reg;
+    // assign sb_dm_write = sb_dm_write_reg;
+    // reg [`DATAMEM_BITS-1:0] addr_out_reg;
+    // assign addr_out = addr_out_reg;
+    // reg dm_en_reg;
+    // assign dm_req = dm_en_reg;
     
-    reg [2:0] state;
-    assign dm_stall = (sb_is_stype || sel_data == 3'd3) && (state != STATE_FINISH);
-    reg dm_ready_reg;
-    assign dm_ready = dm_ready_reg;
+    // reg [2:0] state;
+    // assign dm_stall = (sb_is_stype || sel_data == 3'd3) && (state != STATE_FINISH);
+    // reg dm_ready_reg;
+    // assign dm_ready = dm_ready_reg;
     
     wire is_mem_op = sb_is_stype || sel_data == 3'd3;
     
@@ -91,24 +93,29 @@ module datamem_interface(
     mem_protocol_driver MPH(
         .clk(clk),
         .nrst(nrst),
+        
         .issue_op(is_mem_op),
-        // .busy(dm_stall),
-        .ready()
+        .busy(dm_stall),
+        .ready(read_ready),
+        
         .issue_addr(addr_in),
-        // .addr_out(addr_out),
+        .addr_out(addr_out),
+        
         .read_in(lb_data),
-        .load_out(),
-        .store_in(sb_dm_write_t),
-        .store_out(),
+        .load_out(lb_data_t),
+        
+        .store_in(sb_data_t),
+        .write_out(sb_data),
 
-        .wren(sb_dm_write),
-        .wren_out(),
+        .wren(sb_dm_write_t),
+        .wren_out(sb_dm_write),
 
         .req(dm_req),
         .gnt(dm_gnt),
         .valid(dm_valid)
     );
 	
+	/*
 	// DATA
 	always@(posedge clk) begin
 	   if (!nrst) begin
@@ -197,4 +204,5 @@ module datamem_interface(
             endcase
        end
     end
+    */
 endmodule

@@ -113,9 +113,11 @@ module datamem #(
 	
 	`else
 
-	wire [`WORD_WIDTH-1:0] data_addr_t;
+	wire [`DATAMEM_BITS-1:0] data_addr_t;
+	wire [`WORD_WIDTH-1:0] data_write_t;
 	wire [`WORD_WIDTH-1:0] data_out_t;
 	wire [3:0] data_wren_t;
+	wire [3:0] data_wren = dm_write;
 
 	// Manual dual-port RAM
 	dual_port_ram_bytewise_write #(
