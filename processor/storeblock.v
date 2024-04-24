@@ -23,6 +23,7 @@ module storeblock(
     input [1:0] byte_offset,
     input [1:0] store_select,
     input is_stype,
+    input load_in_mem,
     output [31:0] data,
     output reg [3:0] dm_write
     );
@@ -40,28 +41,34 @@ module storeblock(
     // Changed to little-endian to accomodate RISC-V GNU Assembler Output [b, b+1, b+2, b+3]
 
 	always@(*) begin
-		case(store_select)
-			sb:
-				case({is_stype, byte_offset})
-					3'b100: dm_write <= 4'b1000;
-					3'b101: dm_write <= 4'b0100;
-					3'b110: dm_write <= 4'b0010;
-					3'b111: dm_write <= 4'b0001;
-					default: dm_write <= 4'b0000;
-				endcase
-			sh:
-				case({is_stype, byte_offset})
-					3'b100: dm_write <= 4'b1100;
-					3'b110: dm_write <= 4'b0011;
-					default: dm_write <= 4'b0000;
-				endcase
-			sw:
-				case({is_stype, byte_offset})
-					3'b100: dm_write <= 4'b1111;
-					default: dm_write <= 4'b0000;
-				endcase
+        if (~load_in_mem) begin
+            case(store_select)
+                sb:
+                    case({is_stype, byte_offset})
+                        3'b100: dm_write = 4'b1000;
+                        3'b101: dm_write = 4'b0100;
+                        3'b110: dm_write = 4'b0010;
+                        3'b111: dm_write = 4'b0001;
+                        default: dm_write = 4'b0000;
+                    endcase
+                sh:
+                    case({is_stype, byte_offset})
+                        3'b100: dm_write = 4'b1100;
+                        3'b110: dm_write = 4'b0011;
+                        default: dm_write = 4'b0000;
+                    endcase
+                sw:
+                    case({is_stype, byte_offset})
+                        3'b100: dm_write = 4'b1111;
+                        default: dm_write = 4'b0000;
+                    endcase
 
-			default: dm_write <= 4'b0000;
-		endcase
+                default: dm_write = 4'b0000;
+    		endcase
+        end
+        else begin
+            // prioritize loads over stores
+            dm_write = 4'b0000;
+        end 
 	end
 endmodule

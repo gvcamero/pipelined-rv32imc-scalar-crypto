@@ -32,47 +32,14 @@ module datamem_interface(
         // Core Control I/O
         input stall,
         output read_ready
-        /*
-        // Control Outputs
-        output dm_stall,
-        // Datamem-Specifc I/O
-        output dm_clk,
-        output dm_nrst,
-        output [`DATAMEM_BITS-1:0] dm_addr,
-        output dm_en
-        */
     ); 
     
-    // States
-    localparam STATE_NONE = 3'd0;
-    
-    localparam STATE_ISSUE_LOAD = 3'd1;
-    localparam STATE_ISSUE_STORE = 3'd2;
-    
-    localparam STATE_ACK_LOAD = 3'd3;
-    
-    localparam STATE_FINISH = 3'd7; 
-    
-    // reg [31:0] lb_data_reg;
     wire [31:0] lb_data_t;
-    
     wire [31:0] sb_data_t;
-    // reg [31:0] sb_data_reg;
-    // assign sb_data = sb_data_reg;
     wire [3:0] sb_dm_write_t;
-    // reg [3:0] sb_dm_write_reg;
-    // assign sb_dm_write = sb_dm_write_reg;
-    // reg [`DATAMEM_BITS-1:0] addr_out_reg;
-    // assign addr_out = addr_out_reg;
-    // reg dm_en_reg;
-    // assign dm_req = dm_en_reg;
     
-    // reg [2:0] state;
-    // assign dm_stall = (sb_is_stype || sel_data == 3'd3) && (state != STATE_FINISH);
-    // reg dm_ready_reg;
-    // assign dm_ready = dm_ready_reg;
-    
-    wire is_mem_op = sb_is_stype || sel_data == 3'd3;
+    wire is_load = (sel_data == 3'd3);
+    wire is_mem_op = sb_is_stype || is_load;
     
     reg hold;
     
@@ -90,6 +57,7 @@ module datamem_interface(
 		.byte_offset(sb_byte_offset),
 		.store_select(sb_store_select),
 		.is_stype(sb_is_stype),
+		.load_in_mem(is_load),
 		.data(sb_data_t),
 		.dm_write(sb_dm_write_t)
 	);
