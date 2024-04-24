@@ -198,12 +198,7 @@ module mem_protocol_driver (
                     end
                 end
                 MEM_WAIT_STORE: begin
-                    if (gnt) begin
-                        ready <= 1;
-                    end
-                    else begin
-                        ready <= 0;
-                    end
+                    ready <= 0;
                 end
                 default:
                     ready <= 0;
