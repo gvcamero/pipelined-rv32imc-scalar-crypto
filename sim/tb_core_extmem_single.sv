@@ -36,8 +36,7 @@ module tb_core_extmem_single();
     datamem #(
     .INITIAL_DATA(temp_data)
     ) DATAMEM (
-        .core_clk(CLK),
-        .con_clk(CLK),
+        .clk(CLK),
         .nrst(nrst),
 
         .dm_write(core_data_write),
