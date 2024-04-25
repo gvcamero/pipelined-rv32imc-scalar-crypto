@@ -10,7 +10,7 @@ module datamem_interface(
         // Pass-through to Datamem
         input [`DATAMEM_BITS-1:0] exe_addr_in,
         input [`DATAMEM_BITS-1:0] mem_addr_in,
-        output [`DATAMEM_BITS-1:0] addr_out,        
+        output [`BUS_BITS-1:0] addr_out,        
         // Store Block I/O
         input [31:0] sb_opB,
         input [1:0] sb_byte_offset,
@@ -38,6 +38,8 @@ module datamem_interface(
     
     wire [31:0] lb_data_t;
     wire [31:0] sb_data_t;
+    wire [`DATAMEM_BITS-1:0] addr_out_t;
+    assign addr_out = {addr_out_t, 2'b0}; 
     wire [3:0] sb_dm_write_t;
     
     wire is_load = (sel_data == 3'd3) && (mem_rd != 0);
@@ -82,7 +84,7 @@ module datamem_interface(
         .ready(read_ready),
         
         .issue_addr(addr_in),
-        .addr_out(addr_out),
+        .addr_out(addr_out_t),
         
         .read_in(lb_data),
         .load_out(lb_data_t),

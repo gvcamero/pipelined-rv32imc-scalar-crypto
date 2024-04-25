@@ -40,7 +40,7 @@ module datamem #(
 
 	// Inputs from the RISCV core
 	input [3:0] dm_write,
-	input [`DATAMEM_BITS-1:0] data_addr,
+	input [`BUS_BITS-1:0] data_addr,
 	input [`WORD_WIDTH-1:0] data_in,
 	
 	// Transactional I/O
@@ -82,7 +82,7 @@ module datamem #(
 	blk_mem_gen_datamem COREMEM(
 		.clka(clk),
 		.wea(dm_write),
-		.addra(data_addr[`DATAMEM_BITS-1:0]),
+		.addra(data_addr[`BUS_BITS-1:2]),
 		.dina(data_in_little_e),
 		.douta(coremem_douta),
 
@@ -126,7 +126,7 @@ module datamem #(
 		.clkA(clk),
 		.enaA(1'b1),
 		.weA(data_wren_t),
-		.addrA(data_addr_t[`DATAMEM_BITS-2:0]),
+		.addrA(data_addr_t[`DATAMEM_BITS-1:0]),
 		.dinA(data_write_t),
 		.doutA(coremem_douta),
 
@@ -162,7 +162,7 @@ module datamem #(
         .clk(clk),
         .nrst(nrst),
         
-        .addr_in(data_addr),
+        .addr_in(data_addr[`BUS_BITS-1:2]),
         .addr(data_addr_t),
         
         .read_in(data_out),

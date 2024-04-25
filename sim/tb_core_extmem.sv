@@ -166,6 +166,7 @@ module tb_core_extmem();
 	
 	reg CLK;
 	reg nrst;
+	wire [`INT_SIG_WIDTH-1:0] int_sig = 0;;
 
 	reg [3:0] con_write;
 	reg [`DATAMEM_BITS-1:0] con_addr;
@@ -205,7 +206,7 @@ module tb_core_extmem();
     reg suite_done [NUM_TESTS];
     
     wire [3:0] core_data_write;
-    wire [`DATAMEM_BITS-1:0] core_data_addr;	
+    wire [`BUS_BITS-1:0] core_data_addr;	
     wire [`DATAMEM_WIDTH-1:0] core_data_store;	
     wire [`DATAMEM_WIDTH-1:0] core_data_load;
     wire core_data_request;
@@ -327,7 +328,7 @@ module tb_core_extmem();
                     max_data_addr = 256;
                 end
                 else begin
-                    max_data_addr <= core_data_addr;
+                    max_data_addr <= core_data_addr[`BUS_BITS-1:2];
                 end
             end
     end

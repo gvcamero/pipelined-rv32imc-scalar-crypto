@@ -50,6 +50,7 @@
 `define DATAMEM_WIDTH 32        // Block Memory Width; Can be changed with WORD_WIDTH
 `define DATAMEM_DEPTH 8208  	// ~1024~ NEW -- 8192 (COREMEM) + 16(PROTOCOLMEM) Block Memory Depth
 `define DATAMEM_BITS `ceilLog2(`DATAMEM_DEPTH)
+`define BUS_BITS `ceilLog2(`DATAMEM_DEPTH)+2    // AXI BUS addressing: bytewise
 
 `define REGFILE_SIZE 32         // Can be changed if implementing RISC-V Floating point extensions,
 								// but read up on the RISC-V specifications to be sure.

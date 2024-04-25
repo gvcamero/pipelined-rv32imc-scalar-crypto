@@ -17,9 +17,9 @@ module tb_core_extmem_single();
 
 	reg [`WORD_WIDTH-1:0] last_inst;
 	
-    localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/I-BGE-01.mem");
-    localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/I-BGE-01.mem");
-    localparam string temp_refm = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/mem/I-BGE-01.mem");
+    localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/I-LB-01.mem");
+    localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/I-LB-01.mem");
+    localparam string temp_refm = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/mem/I-LB-01.mem");
 
 	wire [3:0] core_data_write;
     wire [`DATAMEM_BITS-1:0] core_data_addr;	
@@ -363,12 +363,18 @@ module tb_core_extmem_single();
 
 	// This controls max_data_addr
 	always@(posedge CLK) begin
-		if(!nrst)
-			max_data_addr <= 0;
-		else if(!done) 
-			if((CORE.exe_is_stype && |CORE.exe_dm_write && CORE.exe_ALUout[12:2] > max_data_addr) && (CORE.exe_ALUout[12:2] < 11'h400))
-				max_data_addr <= CORE.exe_ALUout[12:2];
-	end
+        if(!nrst)
+            max_data_addr <= 0;
+        else if(!done) 
+            if(core_data_request) begin
+                if (max_data_addr > 255) begin
+                    max_data_addr = 256;
+                end
+                else begin
+                    max_data_addr <= core_data_addr;
+                end
+            end
+    end
 
 	// For simulating int_sig
 	// Test interrupts for the following conditions:
@@ -413,7 +419,7 @@ module tb_core_extmem_single();
 				//$display("0x%3X\t0x%X\t0x%X\tPass", con_addr, con_out, AK.memory[con_addr]);
 				pass = pass + 1;
 			end else begin
-				$display("0x%3X\t0x%X\t0x%X\tFail--------------------", con_addr, con_out, AK.memory[con_addr]);
+				$display("0x%3X\t0x%X\t0x%X\tFail--------------------", con_addr, con_out, box);
 			end
 
 			total_test_cases = total_test_cases + 1;

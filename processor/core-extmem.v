@@ -32,7 +32,7 @@ module core_extmem (
 	
 	// Data Memory I/O
 	output [3:0] ext_data_write,
-	output [`DATAMEM_BITS-1:0] ext_data_addr,	
+	output [`BUS_BITS-1:0] ext_data_addr,	
 	output [`DATAMEM_WIDTH-1:0] ext_data_store,	
 	input [`DATAMEM_WIDTH-1:0] ext_data_load,
 	output ext_data_req,
