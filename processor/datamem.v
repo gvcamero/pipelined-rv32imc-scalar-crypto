@@ -158,7 +158,10 @@ module datamem #(
 	);
 	   
 	   
-    mem_protocol_handler DM_Handler (
+    mem_protocol_handler #(
+        .GRANT_DELAY(GRANT_DELAY),
+        .VALID_DELAY(VALID_DELAY)
+    ) DM_Handler (
         .clk(clk),
         .nrst(nrst),
         

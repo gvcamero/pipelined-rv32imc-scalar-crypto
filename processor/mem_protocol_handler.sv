@@ -180,19 +180,19 @@ module mem_protocol_handler #(
                         if (sim_delay > gnt_delay_r) begin
                             // Grant request
                             gnt <= 1;
-                            if (val_delay_r == 0) begin
-                                if (op_buffer == OP_WRITE) begin
-                                    valid <= 0;
-                                    mem_state <= MEM_RESP_WRITE;
-                                end
-                                else begin
-                                    valid <= 1;
-                                    mem_state <= MEM_RESP_READ;
-                                end 
+                            if (op_buffer == OP_WRITE) begin
+                                valid <= 0;
+                                mem_state <= MEM_RESP_WRITE;
                             end
                             else begin
-                                valid <= 0;
-                                mem_state <= MEM_GRANT;
+                                if (val_delay_r == 0) begin
+                                    valid <= 1;
+                                    mem_state <= MEM_RESP_READ;
+                                end
+                                else begin
+                                    valid <= 0;
+                                    mem_state <= MEM_GRANT;
+                                end
                             end
                         end
                         else begin
