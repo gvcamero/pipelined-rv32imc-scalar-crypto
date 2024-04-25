@@ -8,7 +8,8 @@ module datamem_interface(
         input [2:0] sel_data,           // Writeback data type -- check in lieu of explicit load signal
         input mem_flush,
         // Pass-through to Datamem
-        input [`DATAMEM_BITS-1:0] addr_in,
+        input [`DATAMEM_BITS-1:0] exe_addr_in,
+        input [`DATAMEM_BITS-1:0] mem_addr_in,
         output [`DATAMEM_BITS-1:0] addr_out,        
         // Store Block I/O
         input [31:0] sb_opB,
@@ -30,6 +31,7 @@ module datamem_interface(
         input dm_valid,
         
         // Core Control I/O
+        input [`REGFILE_BITS-1:0] mem_rd,
         input stall,
         output read_ready
     ); 
@@ -38,9 +40,9 @@ module datamem_interface(
     wire [31:0] sb_data_t;
     wire [3:0] sb_dm_write_t;
     
-    wire is_load = (sel_data == 3'd3);
+    wire is_load = (sel_data == 3'd3) && (mem_rd != 0);
     wire is_mem_op = sb_is_stype || is_load;
-    
+    wire [`DATAMEM_BITS-1:0] addr_in = is_load ? mem_addr_in : exe_addr_in;
     /*
     reg hold;
     

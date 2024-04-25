@@ -912,7 +912,8 @@ module core_extmem (
 	     .sel_data(mem_sel_data),
 	     .mem_flush(mem_flush),
 	     
-	     .addr_in(exe_ALUout[`DATAMEM_BITS+1:2]),
+	     .exe_addr_in(exe_ALUout[`DATAMEM_BITS+1:2]),
+	     .mem_addr_in(mem_ALUout[`DATAMEM_BITS+1:2]),
 	     .addr_out(mem_dm_addr),
 	     
 	     .sb_opB(exe_rstore),
@@ -932,6 +933,7 @@ module core_extmem (
          .dm_valid(ext_data_valid),
          
          .dm_stall(mem_dm_stall),
+         .mem_rd(mem_rd),
          .read_ready(mem_dm_ready)
 	);
 
