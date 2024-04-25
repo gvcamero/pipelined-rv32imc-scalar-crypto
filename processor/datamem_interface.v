@@ -41,6 +41,7 @@ module datamem_interface(
     wire is_load = (sel_data == 3'd3);
     wire is_mem_op = sb_is_stype || is_load;
     
+    /*
     reg hold;
     
     always@(posedge clk) begin
@@ -51,6 +52,7 @@ module datamem_interface(
         else
             hold <= 0;
     end
+    */
         
     storeblock STOREBLOCK(
 		.opB(sb_opB),
@@ -73,7 +75,7 @@ module datamem_interface(
         .clk(clk),
         .nrst(nrst),
         
-        .issue_op(is_mem_op && ~hold),
+        .issue_op(is_mem_op), // && ~hold),
         .busy(dm_stall),
         .ready(read_ready),
         
