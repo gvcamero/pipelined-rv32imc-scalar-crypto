@@ -82,13 +82,13 @@ module datamem #(
 	blk_mem_gen_datamem COREMEM(
 		.clka(clk),
 		.wea(dm_write),
-		.addra(data_addr[`DATAMEM_BITS-2:0]),
+		.addra(data_addr[`DATAMEM_BITS-1:0]),
 		.dina(data_in_little_e),
 		.douta(coremem_douta),
 
 		.clkb(clk),
 		.web(4'b0),
-		.addrb(con_addr[`DATAMEM_BITS-2:0]),
+		.addrb(con_addr[`DATAMEM_BITS-1:0]),
 		.dinb(32'b0),
 		.doutb(coremem_doutb)
 	);
