@@ -44,9 +44,9 @@ module datamem #(
 	input [`WORD_WIDTH-1:0] data_in,
 	
 	// Transactional I/O
-	input data_valid,
+	output data_valid,
 	output data_gnt,
-	output data_req,
+	input data_req,
 	
 	// Inputs from protocol controllers
 	// NOTE: protocol controllers cannot read from FPGAIO
