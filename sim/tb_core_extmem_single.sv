@@ -58,7 +58,11 @@ module tb_core_extmem_single();
     instmem #(
        .INSTMEM_PROGRAM(temp_inst)
     ) INSTMEM (
-        .sel_ISR(1'b0),
+        .clk(CLK),
+        .nrst(nrst),
+        
+        .ready(1'b1),
+        .valid(),
 
         .addr(core_inst_addr),
         .inst(core_inst_data)

@@ -67,81 +67,42 @@ module instmem_interface (
             end
         end
     end
-    
-    // MEMORY INTERFACE [DRIVER]
-    
-    mem_protocol_driver IPD (
-        .clk(clk),
-        .nrst(nrst),
-        
-        .issue_op(issue_req),
-        .busy(busy),
-        .ready(ready),
-        
-        .issue_addr(inst_addr_t),
-        .addr_out(inst_addr),
-        
-        .read_in(inst_data),
-        .load_out(inst_data_t),
-        
-        .store_in(32'd0),
-        .write_out(),
-
-        .wren(4'd0),
-        .wren_out(),
-
-        .req(im_req),
-        .gnt(im_gnt),
-        .valid(im_valid)
-    );
 
 endmodule
 
-module _pc_x(
+module _pc_o(
     input clk,
     input nrst,
-    input id_stall,
-    input if_flush,
+    input hold_i,                                         // take next instruction
     
     input [`PC_ADDR_BITS-1:0] if_pc4,
     input [`PC_ADDR_BITS-1:0] if_pcnew,
-    input branch,
-    input read,
+    input branch,                                       // control flow instruction
+    // input read,
     
-    output reg [`PC_ADDR_BITS-1:0] pc_out,
-    output reg branch_o
+    output reg [`PC_ADDR_BITS-1:0] addr_out,            // next instruction location
+    output reg [`PC_ADDR_BITS-1:0] pc_out,              // PC for current IF stage instruction
+    output reg branch_o,
+    output reg hold_o                                     // Hold following instruction(s)
     );
     
-    reg [1:0] fill;
-    reg [`PC_ADDR_BITS-1:0] addr_buffer [3:0];
-    reg branch_buffer [3:0];
-    reg [`PC_ADDR_BITS-1:0] pc_next;
-    
-    always@ (*) begin
-        case(fill)
-            2'd0: begin
-                if (id_stall || if_flush) begin
-                    pc_next = pc_out;
-                    branch_o = 0;
-                end
-                else begin
-                    pc_next = if_pcnew;
-                    branch_o = branch;
-                end
-            end
-            default: begin
-                pc_next = addr_buffer[fill-1];
-                branch_o = branch_buffer [fill-1];
-            end
-        endcase
-    end
+    reg [`PC_ADDR_BITS-1:0] pc;
+    reg [`PC_ADDR_BITS-1:0] br_buffer;
+    reg empty_issue;
+    assign hold_o = hold_i;
     
     always@(posedge clk) begin
         if (!nrst) begin
-            pc_out <= 32'd0;
+            addr_out <= `PC_ADDR_BITS'd0;
+            pc_out <= `PC_ADDR_BITS'd0;
+            branch_o <= 0;
+            empty_issue <= 1;
         end
         else begin
-            pc_out <= pc_next;
+            addr_out <= if_pcnew;
+            pc_out <= addr_out;
+            branch_o <= branch;
+            empty_issue <= 0;
         end
     end
     
@@ -150,19 +111,29 @@ endmodule
 module _issue_i(
     input clk,
     input nrst,
-
-    input gnt,
-    output req,
-    output ready,
     
-    input [`WORD_WIDTH-1:0] addr,
-    
-    
-    output reg [`WORD_WIDTH-1:0] addr_out 
+    input branch,
+    input restart,
+    input [`PC_ADDR_BITS-1:0] base_addr,
+    input [`PC_ADDR_BITS-1:0] restart_addr,
+        
+    output reg ready,
+    output [`WORD_WIDTH-1:0] addr
     );
-
-
-
+     
+    wire [`PC_ADDR_BITS-1:0] addr_t = !restart ? base_addr : restart_addr;
+    assign addr = {{`WORD_WIDTH-`PC_ADDR_BITS{1'b0}}, addr_t};
+    
+    always@(posedge clk) begin
+        if(!nrst) begin
+            ready <= 0;
+        end
+        else begin
+            // 1 cycle delay for empty issue clearing
+            ready <= !branch;
+        end
+    end
+    
 endmodule
 
 module _buffer_o(
