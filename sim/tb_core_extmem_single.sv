@@ -17,7 +17,7 @@ module tb_core_extmem_single();
 
 	reg [`WORD_WIDTH-1:0] last_inst;
 	
-    localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/I-XOR-01.mem");
+    localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/I-LB-01.mem");
     localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/I-LB-01.mem");
     localparam string temp_refm = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/mem/I-LB-01.mem");
 
