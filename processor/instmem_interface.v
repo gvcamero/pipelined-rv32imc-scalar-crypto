@@ -174,12 +174,11 @@ module _buffer_o(
     input valid,
     input align,
     input flush,
-    input hold,
-    input [`WORD_WIDTH-1:0] inst_in,
+    input [`WORD_WIDTH-1:0] inst_in
 
     output compressed_o,
     output req_d,
-    output reg ready_o,
+    output ready_o,
     output reg [`WORD_WIDTH-1:0] inst_out
     );
 
