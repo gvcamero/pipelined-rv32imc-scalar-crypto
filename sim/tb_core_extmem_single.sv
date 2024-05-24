@@ -23,6 +23,19 @@ module tb_core_extmem_single();
 
 	wire [3:0] core_data_write;
     wire [`DATAMEM_BITS-1:0] core_data_addr;	
+    wire [`BUS_BITS-1:0] bus_data_addr = {2'b0, core_data_addr};	
+    wire [`DATAMEM_WIDTH-1:0] core_data_store;	
+    wire [`DATAMEM_WIDTH-1:0] core_data_load;
+    wire core_data_request;
+    wire core_data_grant;
+    wire core_data_valid;
+    
+    wire [`PC_ADDR_BITS-1:0] core_inst_addr;
+    wire [`WORD_WIDTH-1:0] core_inst_data;
+	wire [`WORD_WIDTH-1:0] core_if_inst;
+    
+    wire [3:0] core_data_write;
+    wire [`BUS_BITS-1:0] core_data_addr;	
     wire [`DATAMEM_WIDTH-1:0] core_data_store;	
     wire [`DATAMEM_WIDTH-1:0] core_data_load;
     wire core_data_request;
@@ -34,13 +47,15 @@ module tb_core_extmem_single();
 	wire [`WORD_WIDTH-1:0] core_if_inst;
     
     datamem #(
-    .INITIAL_DATA(temp_data)
+        .INITIAL_DATA(temp_data),
+        .GRANT_DELAY(7),
+        .VALID_DELAY(2)
     ) DATAMEM (
         .clk(CLK),
         .nrst(nrst),
 
         .dm_write(core_data_write),
-        .data_addr(core_data_addr),        
+        .data_addr(bus_data_addr),        
         .data_in(core_data_store),
         .data_req(core_data_request),
         .data_gnt(core_data_grant),

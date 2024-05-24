@@ -270,6 +270,8 @@ module core_extmem (
 	
 	wire if_stall;			// Controls Interrupt Controller stall
 	wire id_stall;			// Controls BHT stall & flush logic
+	wire exe_stall;
+	wire mem_stall;
 
 	wire if_flush;			// Controls PC flush
 	wire id_flush;			// Controls IF/ID flush
@@ -386,6 +388,8 @@ module core_extmem (
 		// Stall signals
 		.if_stall(if_stall),
 		.id_stall(id_stall),
+		.exe_stall(exe_stall),
+		.mem_stall(mem_stall),
 
 		// Flushes/resets
 		.if_flush(if_flush),
@@ -451,56 +455,66 @@ module core_extmem (
 	);
 
 // CLOCKS ========================================================
-	BUFGCE 
-	#(
-	   .SIM_DEVICE("7SERIES")
-	)
-	en_iF 
-	(
-	 	.I(CLKIP_OUT),
-	 	.CE(if_clk_en),
-	 	.O(if_clk)
-	);
-
-	BUFGCE #(
-	   .SIM_DEVICE("7SERIES")
-	) en_id (
-	 	.I(CLKIP_OUT),
-	 	.CE(id_clk_en),
-	 	.O(id_clk)
-	);
-
-	BUFGCE #(
-	   .SIM_DEVICE("7SERIES")
-	) en_exe (
-	 	.I(CLKIP_OUT),
-	 	.CE(exe_clk_en),
-	 	.O(exe_clk)
-	);
-
-	BUFGCE #(
-	   .SIM_DEVICE("7SERIES")
-	) en_mem (
-	 	.I(CLKIP_OUT),
-	 	.CE(mem_clk_en),
-	 	.O(mem_clk)
-	);
-
-	BUFGCE #(
-	   .SIM_DEVICE("7SERIES")
-	) en_wb (
-	 	.I(CLKIP_OUT),
-	 	.CE(wb_clk_en),
-	 	.O(wb_clk)
-	);
-
-	BUFGCE #(
-	   .SIM_DEVICE("7SERIES")
-	) en_rf(
-	 	.I(CLKIP_OUT),
-	 	.CE(rf_clk_en),
-	 	.O(rf_clk)
-	);
+    
+    `ifdef FEATURE_XILINX_BUFFER_IP
+        BUFGCE 
+        #(
+           .SIM_DEVICE("7SERIES")
+        )
+        en_iF 
+        (
+            .I(CLKIP_OUT),
+            .CE(if_clk_en),
+            .O(if_clk)
+        );
+    
+        BUFGCE #(
+           .SIM_DEVICE("7SERIES")
+        ) en_id (
+            .I(CLKIP_OUT),
+            .CE(id_clk_en),
+            .O(id_clk)
+        );
+    
+        BUFGCE #(
+           .SIM_DEVICE("7SERIES")
+        ) en_exe (
+            .I(CLKIP_OUT),
+            .CE(exe_clk_en),
+            .O(exe_clk)
+        );
+    
+        BUFGCE #(
+           .SIM_DEVICE("7SERIES")
+        ) en_mem (
+            .I(CLKIP_OUT),
+            .CE(mem_clk_en),
+            .O(mem_clk)
+        );
+    
+        BUFGCE #(
+           .SIM_DEVICE("7SERIES")
+        ) en_wb (
+            .I(CLKIP_OUT),
+            .CE(wb_clk_en),
+            .O(wb_clk)
+        );
+    
+        BUFGCE #(
+           .SIM_DEVICE("7SERIES")
+        ) en_rf(
+            .I(CLKIP_OUT),
+            .CE(rf_clk_en),
+            .O(rf_clk)
+        );
+	`else
+        assign if_clk = CLKIP_OUT;
+        assign id_clk = CLKIP_OUT;
+        assign exe_clk = CLKIP_OUT;
+        assign mem_clk = CLKIP_OUT;
+        assign wb_clk = CLKIP_OUT;
+        assign rf_clk = CLKIP_OUT;
+    `endif
 
 
 // IF Stage ======================================================================
@@ -591,6 +605,7 @@ module core_extmem (
 		.nrst(nrst),
 
 		.flush(id_flush),
+		.stall(if_stall),
 
 		.if_pc4(if_pc4), 	.id_pc4(id_pc4),
 		.if_inst(if_inst), 	.id_inst(id_inst),
@@ -759,6 +774,7 @@ module core_extmem (
 		.clk(exe_clk),
 		.nrst(nrst),
 
+        .stall(id_stall),
 		.flush(exe_flush),
 
 		.id_pc4(id_pc4),					.exe_pc4(exe_pc4),
@@ -878,6 +894,7 @@ module core_extmem (
 		.clk(mem_clk),
 		.nrst(nrst),
 
+        .stall(exe_stall),
 		.flush(mem_flush),
 
 		.exe_pc4(exe_pc4),					.mem_pc4(mem_pc4),
@@ -941,6 +958,7 @@ module core_extmem (
 		.clk(wb_clk),
 		.nrst(nrst),
 
+        .stall(mem_stall),
 		.flush(wb_flush),
 
 		.mem_pc4(mem_pc4),					.wb_pc4(wb_pc4),

@@ -22,6 +22,7 @@ module pipereg_if_id(
 	input clk,
 	input nrst,
 
+    input stall,
 	input flush,
 
 	// Incremented PC
@@ -54,10 +55,18 @@ module pipereg_if_id(
 			id_PC <= 0;
 		end
 		else begin
-			id_pc4 <= if_pc4;
-			id_inst <= if_inst;
-			
-			id_PC <= if_PC;
+		   if(!stall) begin
+               id_pc4 <= if_pc4;
+               id_inst <= if_inst;
+               
+               id_PC <= if_PC;
+		   end
+		   else begin
+		       id_pc4 <= id_pc4;
+               id_inst <= id_inst;
+               
+               id_PC <= id_PC;
+		   end
 		end
 	end
 endmodule

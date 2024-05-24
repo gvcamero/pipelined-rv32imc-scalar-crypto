@@ -22,6 +22,7 @@ module pipereg_exe_mem(
 	input clk,
 	input nrst,
 	
+	input stall,
 	input flush,
 
 	input [`PC_ADDR_BITS-1:0] exe_pc4,
@@ -87,18 +88,34 @@ module pipereg_exe_mem(
 			mem_sel_data <= 0;
 		end
 		else begin
-			mem_pc4 <= exe_pc4;
-			mem_ALUout <= exe_ALUout;
-			mem_DIVout <= exe_DIVout;
-			mem_storedata <= exe_storedata;
-			mem_imm <= exe_imm;
-			mem_rd <= exe_rd;
-
-			// Control signals
-			mem_dm_write <= exe_dm_write;
-			mem_wr_en <= exe_wr_en;
-			mem_dm_select <= exe_dm_select;
-			mem_sel_data <= exe_sel_data;
+		    if (!stall) begin
+                mem_pc4 <= exe_pc4;
+                mem_ALUout <= exe_ALUout;
+                mem_DIVout <= exe_DIVout;
+                mem_storedata <= exe_storedata;
+                mem_imm <= exe_imm;
+                mem_rd <= exe_rd;
+    
+                // Control signals
+                mem_dm_write <= exe_dm_write;
+                mem_wr_en <= exe_wr_en;
+                mem_dm_select <= exe_dm_select;
+                mem_sel_data <= exe_sel_data;
+            end
+            else begin
+                mem_pc4 <= mem_pc4;
+                mem_ALUout <= mem_ALUout;
+                mem_DIVout <= mem_DIVout;
+                mem_storedata <= mem_storedata;
+                mem_imm <= mem_imm;
+                mem_rd <= mem_rd;
+    
+                // Control signals
+                mem_dm_write <= mem_dm_write;
+                mem_wr_en <= mem_wr_en;
+                mem_dm_select <= mem_dm_select;
+                mem_sel_data <= mem_sel_data;
+            end
 		end
 	end
 

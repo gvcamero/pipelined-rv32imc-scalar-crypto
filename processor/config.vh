@@ -4,6 +4,7 @@
 `define FEATURE_MULT
 // `define FEATURE_DIV
 // `define FEATURE_XILINX_DATAMEM_IP_GEN
+// `define FEATURE_XILINX_BUFFER_IP
 
 `define REPO_LOCATION        "/home/atan/Projects/pipelined-RV32IMC/"
 `define TEST_LOCATION        "assembly-tests/riscv-compliance/"
