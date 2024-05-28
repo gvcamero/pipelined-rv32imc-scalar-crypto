@@ -40,7 +40,7 @@ module datamem #(
 
 	// Inputs from the RISCV core
 	input [3:0] dm_write,
-	input [`BUS_BITS-1:0] data_addr,
+	input [`BUS_BITS-1:0] data_addr,       // byte-addressable memory
 	input [`WORD_WIDTH-1:0] data_in,
 	
 	// Transactional I/O

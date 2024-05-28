@@ -35,7 +35,11 @@ module dual_port_ram_bytewise_write #(
     // CORE_MEMORY
     reg [DATA_WIDTH-1:0] ram_block [(2**ADDR_WIDTH)-1:0];
     
+    integer i;
     initial begin
+        for (i = 0; i < 2**ADDR_WIDTH; i=i+1) begin
+            ram_block[i] = 32'd0;
+        end
         $readmemh(INITIAL_DATA, ram_block);
     end
     
