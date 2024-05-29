@@ -45,7 +45,8 @@ module core_extmem (
 	input [`WORD_WIDTH-1:0] ext_inst_data,
 	
 	// Debug Outputs
-	output [`WORD_WIDTH-1:0] ext_if_inst
+	output [`WORD_WIDTH-1:0] ext_if_inst,
+	output [`WORD_WIDTH-1:0] ext_id_inst
 );
 	
 /******************************** DECLARING WIRES *******************************/
@@ -69,6 +70,7 @@ module core_extmem (
 	// Outputs of IF/ID Pipeline Register
 	wire [`PC_ADDR_BITS-1:0] id_pc4;		// PC + 4
 	wire [`WORD_WIDTH-1:0] id_inst;			// 32bit Instruction
+	assign ext_id_inst = id_inst;
 	wire [`PC_ADDR_BITS-1:0] id_PC;			// PC
 
 	// Other Datapath signals

@@ -3,6 +3,8 @@
 `include "constants.vh"
 `include "config.vh"
 
+// #define SIM_BEHAV
+
 module tb_core_extmem_single();
 	
 	reg CLK;
@@ -33,6 +35,7 @@ module tb_core_extmem_single();
     wire [`PC_ADDR_BITS-1:0] core_inst_addr;
     wire [`WORD_WIDTH-1:0] core_inst_data;
 	wire [`WORD_WIDTH-1:0] core_if_inst;
+	wire [`WORD_WIDTH-1:0] core_id_inst;
     
     wire [3:0] core_data_write;
     wire [`BUS_BITS-1:0] core_data_addr;	
@@ -96,7 +99,8 @@ module tb_core_extmem_single();
         
         .ext_inst_addr(core_inst_addr),
         .ext_inst_data(core_inst_data),
-		.ext_if_inst(core_if_inst)
+		.ext_if_inst(core_if_inst),
+		.ext_id_inst(core_id_inst)
     );
     
     wire [31:0] box;
@@ -132,8 +136,7 @@ module tb_core_extmem_single();
 	integer max_data_addr;
 
 	// For checking instructions loaded
-	wire [31:0] INST;
-	assign INST = CORE.if_inst;
+    wire [31:0] INST = core_if_inst;
 
 	/********************************
 	wire [9:0] data_addr;
@@ -171,6 +174,8 @@ module tb_core_extmem_single();
 		#100 nrst = 1;
 	end
 	
+	`ifdef SIM_BEHAV
+	
 	reg [`WORD_WIDTH-1:0] exe_inst, mem_inst, wb_inst;
 	always@(posedge CLK) begin
 		if(!nrst) begin
@@ -195,6 +200,7 @@ module tb_core_extmem_single();
 		end
 	end
 	
+	`endif
 
 	// Checking for 10 NOPs/50 looping jumps in a row
 	// NOTE: checking for last_inst should be done for at least 50 cycles
@@ -239,6 +245,8 @@ module tb_core_extmem_single();
 		if(!nrst) clock_counter <= 0;
 		else if(!done) clock_counter <= clock_counter + 1;
 	end
+	
+	`ifdef SIM_BEHAV
 
 	always@(posedge CORE.if_clk) begin
 		if(!nrst) if_clk_counter <= 0;
@@ -375,6 +383,8 @@ module tb_core_extmem_single();
 			end
 		end
 	end
+	
+	`endif
 
 	// This controls max_data_addr
 	always@(posedge CLK) begin
@@ -442,6 +452,8 @@ module tb_core_extmem_single();
 			con_addr = con_addr + 1;
 		end
 	end
+	
+	`ifdef SIM_BEHAV
 
 	// Since Vivado/Verilog can't handle nested FOR loops well, this part
 	// was split off into its own task. Ideally, it would be within the for loop
@@ -454,6 +466,9 @@ module tb_core_extmem_single();
 			$display("Entry %0d: %0d passed/%0d accesses\tAccuracy: %f%%.", 3, bht_correct[{i[3:0], 2'b11}], bht_accesses[{i[3:0], 2'b11}], 100*($itor(bht_correct[{i[3:0], 2'b11}])/$itor(bht_accesses[{i[3:0], 2'b11}])) );
 		end
 	endtask
+	
+	`endif
+	
 	always@(posedge print_metrics) begin
 		i = 0;
 		j = 0;
@@ -462,6 +477,7 @@ module tb_core_extmem_single();
 		if(check == 50) i = 50;
 		else i = 10;
 		$display("Passed %0d/%0d test cases.\nClock cycles: %0d", pass, total_test_cases, clock_counter-i);
+		`ifdef SIM_BEHAV
 		$display("Total cycles stalled: %0d", cumulative_stall_counter);
 		$display("Total cycles flushed: %0d", cumulative_flush_counter);
 		$display("Total NOPs: %0d", nop_counter);
@@ -503,8 +519,11 @@ module tb_core_extmem_single();
 			else $display("Set: %0d\tOverwrites: 0", i);
 			bht_entry_display();
 			$display("------");
-		end */		$finish;
+		end */	
+		`endif
+		$finish;
 	end
+	
 endmodule
 
 // ANSWER KEY
