@@ -48,7 +48,7 @@ module pipereg_if_id(
 	end
 
 	always@(posedge clk) begin
-		if(!nrst || flush) begin
+		if(!nrst) begin
 			id_pc4 <= 0;
 			id_inst <= 0;
 
@@ -60,6 +60,11 @@ module pipereg_if_id(
                id_inst <= if_inst;
                
                id_PC <= if_PC;
+		   end else if (flush) begin
+		      id_pc4 <= 0;
+              id_inst <= 0;
+    
+              id_PC <= 0;
 		   end
 		   else begin
 		       id_pc4 <= id_pc4;

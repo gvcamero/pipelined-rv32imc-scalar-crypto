@@ -835,7 +835,8 @@ module core_extmem (
 		.less(exe_less),
 		.signed_less(exe_signed_less)
 	);
-
+    
+    `ifdef FEATURE_DIV
 	divider_unit DIVIDER(
 		.CLK(CLK_BUF),
 		.nrst(nrst),
@@ -852,6 +853,11 @@ module core_extmem (
 		.div_running(exe_div_running),
 		.DIVout(exe_DIVout)
 	);
+	`else
+	assign exe_DIVout = 0;
+	assign exe_div_running = 0;
+	`endif
+	
 
 	branchpredictor BRANCHPREDICTOR(
 		.CLK(CLK_BUF),
