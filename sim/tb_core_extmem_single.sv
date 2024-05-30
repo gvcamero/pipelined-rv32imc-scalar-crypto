@@ -84,7 +84,6 @@ module tb_core_extmem_single();
     
     core_extmem #() CORE(
         .CLKIP_OUT(CLK),
-        .CLK_BUF(CLK),
         .nrst(nrst),
 
         .int_sig(int_sig),

@@ -57,21 +57,6 @@ module pipereg_exe_mem(
 	output reg [2:0] mem_sel_data
 );
 	
-	initial begin
-		mem_pc4 <= 0;	
-		mem_ALUout <= 0;
-		mem_DIVout <= 0;
-		mem_storedata <= 0;
-		mem_imm <= 0;
-		mem_rd <= 0;
-
-		// Control signals
-		mem_dm_write <= 0;
-		mem_wr_en <= 0;
-		mem_dm_select <= 0;
-		mem_sel_data <= 0;
-	end
-	
 	always@(posedge clk) begin
 		if(!nrst) begin
 			mem_pc4 <= 0;	
@@ -88,20 +73,7 @@ module pipereg_exe_mem(
 			mem_sel_data <= 0;
 		end
 		else begin
-		    if (!stall) begin
-                mem_pc4 <= exe_pc4;
-                mem_ALUout <= exe_ALUout;
-                mem_DIVout <= exe_DIVout;
-                mem_storedata <= exe_storedata;
-                mem_imm <= exe_imm;
-                mem_rd <= exe_rd;
-    
-                // Control signals
-                mem_dm_write <= exe_dm_write;
-                mem_wr_en <= exe_wr_en;
-                mem_dm_select <= exe_dm_select;
-                mem_sel_data <= exe_sel_data;
-            end else if(flush) begin
+		    if(flush) begin
                 mem_pc4 <= 0;	
                 mem_ALUout <= 0;
                 mem_DIVout <= 0;
@@ -114,6 +86,19 @@ module pipereg_exe_mem(
                 mem_wr_en <= 0;
                 mem_dm_select <= 0;
                 mem_sel_data <= 0;
+            end else if (!stall) begin
+                mem_pc4 <= exe_pc4;
+                mem_ALUout <= exe_ALUout;
+                mem_DIVout <= exe_DIVout;
+                mem_storedata <= exe_storedata;
+                mem_imm <= exe_imm;
+                mem_rd <= exe_rd;
+    
+                // Control signals
+                mem_dm_write <= exe_dm_write;
+                mem_wr_en <= exe_wr_en;
+                mem_dm_select <= exe_dm_select;
+                mem_sel_data <= exe_sel_data;
             end
             else begin
                 mem_pc4 <= mem_pc4;

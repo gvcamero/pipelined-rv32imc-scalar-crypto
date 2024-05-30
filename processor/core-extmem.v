@@ -23,8 +23,7 @@
 `include "config.vh"
 
 module core_extmem (
-	input CLKIP_OUT,			// 50MHz unbuffered clock
-	input CLK_BUF,				// 50MHz buffered clock
+	input CLKIP_OUT,			// Input clock
 	input nrst,
 
 	// Interrupt signals
@@ -365,7 +364,7 @@ module core_extmem (
 /*********************** DATAPATH (INSTANTIATING MODULES) ***********************/
 // STALL, FLUSH, and FORWARDING Controller =======================================
 	sf_controller SF_CONTROLLER(
-		.clk(CLK_BUF),
+		.clk(CLKIP_OUT),
 		.nrst(nrst),
 
 		// Inputs from IF stage
@@ -540,7 +539,7 @@ module core_extmem (
     );
 
 	interrupt_controller INT_CON(
-		.clk(CLK_BUF),
+		.clk(CLKIP_OUT),
 		.nrst(nrst),
 		.stall(if_stall),
 
@@ -821,7 +820,7 @@ module core_extmem (
 	assign exe_rstore = (fw_wb_to_exe_B && exe_is_stype)? wb_loaddata : exe_fwdstore;
 
 	alu ALU(
-		.CLK(CLK_BUF),
+		.CLK(CLKIP_OUT),
 		.nrst(nrst),
 		.load_hazard(load_hazard),
 
@@ -838,7 +837,7 @@ module core_extmem (
     
     `ifdef FEATURE_DIV
 	divider_unit DIVIDER(
-		.CLK(CLK_BUF),
+		.CLK(CLKIP_OUT),
 		.nrst(nrst),
 		.load_hazard(load_hazard),
 
@@ -860,7 +859,7 @@ module core_extmem (
 	
 
 	branchpredictor BRANCHPREDICTOR(
-		.CLK(CLK_BUF),
+		.CLK(CLKIP_OUT),
 		.nrst(nrst),
 
 		.ISR_running(ISR_running),
