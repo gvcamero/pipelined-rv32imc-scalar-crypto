@@ -90,13 +90,24 @@ module alu(
 	// NOTE: if a load_hazard is present, we delay the update of mul_stall by 1 cycle.
     `ifdef FEATURE_MULT
         reg mul_stall_reg;
-        initial mul_stall_reg = 0;
+        reg [`WORD_WIDTH-1:0] mul_res_reg;
+        // initial mul_stall_reg = 0;
         wire is_mul = (ALU_op > 4'd10) & (ALU_op != 4'd15);
         always@(posedge CLK) begin
-            if(!nrst) 
+            if(!nrst) begin 
                 mul_stall_reg <= 0;
-            else if(!load_hazard)
+                mul_res_reg <= 32'd0;
+            end
+            else if (!load_hazard) begin
                 mul_stall_reg <= is_mul & mul_stall;
+                case(ALU_op)
+                    `ALU_MUL: mul_res_reg <= mulh_res[31:0];
+                    `ALU_MULHU: mul_res_reg <= mulhu_res[63:32];
+                    `ALU_MULH: mul_res_reg <= mulh_res[63:32];
+                    `ALU_MULHSU: mul_res_reg <= mulhsu_res[63:32];
+                    default: mul_res_reg <= 32'd0;
+                endcase
+            end
         end
         assign mul_stall = ~mul_stall_reg & is_mul;
     `else
@@ -118,10 +129,10 @@ module alu(
 			`ALU_SRL: res = op_a >> op_b[4:0];
 			`ALU_SRA: res = signed_a >>> signed_b[4:0];
             // M extension
-			`ALU_MUL: res = mulhu_res[31:0];
-			`ALU_MULHU: res = mulhu_res[63:32];
-			`ALU_MULH: res = mulh_res[63:32];
-			`ALU_MULHSU: res = mulhsu_res[63:32];
+			`ALU_MUL: res = mul_res_reg;
+			`ALU_MULHU: res = mul_res_reg;
+			`ALU_MULH: res = mul_res_reg;
+			`ALU_MULHSU: res = mul_res_reg;
             // division unimplemented
             
             //other ops 
