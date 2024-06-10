@@ -2,10 +2,10 @@
 `include "constants.vh"
 `include "config.vh"
 
-module mem_protocol_handler #(
-    parameter GRANT_DELAY = 0,              // delay before granting memory access
-    parameter VALID_DELAY = 0              // delay before read operation finishes after grant
-    )(
+parameter GRANT_DELAY = 5;              // delay before granting memory access
+parameter VALID_DELAY = 3;              // delay before read operation finishes after grant
+
+module mem_protocol_handler (
     input clk,
     input nrst,
     

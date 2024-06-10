@@ -30,11 +30,9 @@
 `include "constants.vh"
 `include "config.vh"
 
-module datamem #(
-    parameter INITIAL_DATA = "datamem.mem",
-    parameter GRANT_DELAY = 0,              // delay before granting memory access
-    parameter VALID_DELAY = 0              // delay before read operation finishes after grant
-    )(
+
+
+module datamem (
 	input clk,         		// un-gated clock signal
 	input nrst,
 
@@ -120,9 +118,7 @@ module datamem #(
 	wire [3:0] data_wren = dm_write;
 
 	// Manual dual-port RAM
-	dual_port_ram_bytewise_write #(
-	   .INITIAL_DATA(INITIAL_DATA)
-	) COREMEM (
+	dual_port_ram_bytewise_write_noparam COREMEM (
 		.clkA(clk),
 		.enaA(1'b1),
 		.weA(data_wren_t),
@@ -137,31 +133,9 @@ module datamem #(
 		.dinB(32'b0),
 		.doutB(coremem_doutb)
 	);
-	
-	dual_port_ram_bytewise_write #(
-	   .INITIAL_DATA("answerkey.mem"),
-	   .ADDR_WIDTH(4)
-	) PROTOCOLMEM(
-		.clkA(clk),
-		.enaA(1'b1),
-		.weA(4'b0),
-		.addrA(data_addr_t[3:0]),
-		.dinA(32'b0),
-		.doutA(protocolmem_douta),
-
-		.clkB(clk),
-		.enaB(1'b1),
-		.weB(con_write),
-		.addrB(con_addr[3:0]),
-		.dinB(con_in_little_e),
-		.doutB(protocolmem_doutb)
-	);
 	   
 	   
-    mem_protocol_handler #(
-        .GRANT_DELAY(GRANT_DELAY),
-        .VALID_DELAY(VALID_DELAY)
-    ) DM_Handler (
+    mem_protocol_handler DM_Handler (
         .clk(clk),
         .nrst(nrst),
         
@@ -219,4 +193,53 @@ module datamem #(
 	end
 	wire [`WORD_WIDTH-1:0] con_out_little_e = protocol_sel_reg? protocolmem_doutb : coremem_doutb;
 	assign con_out = {con_out_little_e[7:0], con_out_little_e[15:8], con_out_little_e[23:16], con_out_little_e[31:24]};
+endmodule
+
+`define NUM_COL 4
+`define COL_WIDTH 8
+`define ADDR_WIDTH `DATAMEM_BITS-1 // Addr Width in bits :
+ //2**ADDR_WIDTH = RAM Depth
+// `define DATA_WIDTH `NUM_COL*`COL_WIDTH // Data Width in bits
+
+module dual_port_ram_bytewise_write_noparam (
+        input clkA,
+        input enaA,
+        input [`NUM_COL-1:0] weA,
+        input [`ADDR_WIDTH-1:0] addrA,
+        input [`WORD_WIDTH-1:0] dinA,
+        output reg [`WORD_WIDTH-1:0] doutA,
+        input clkB,
+        input enaB,
+        input [`NUM_COL-1:0] weB,
+        input [`ADDR_WIDTH-1:0] addrB,
+        input [`WORD_WIDTH-1:0] dinB,
+        output reg [`WORD_WIDTH-1:0] doutB
+    );
+    
+    // CORE_MEMORY
+    reg [`WORD_WIDTH-1:0] ram_block [(2**`ADDR_WIDTH)-1:0];
+    
+    integer i;
+    // PORT-A Operation
+    always @ (posedge clkA) begin
+        if(enaA) begin
+            for(i=0;i<`NUM_COL;i=i+1) begin
+                if(weA[i]) begin
+                    ram_block[addrA][i*`COL_WIDTH +: `COL_WIDTH] <= dinA[i*`COL_WIDTH +: `COL_WIDTH];
+                end
+            end
+            doutA <= ram_block[addrA];
+        end
+    end
+    // Port-B Operation:
+    always @ (posedge clkB) begin
+        if(enaB) begin
+            for(i=0;i<`NUM_COL;i=i+1) begin
+                if(weB[i]) begin
+                    ram_block[addrB][i*`COL_WIDTH +: `COL_WIDTH] <= dinB[i*`COL_WIDTH +: `COL_WIDTH];
+                end
+            end
+            doutB <= ram_block[addrB];
+        end
+    end
 endmodule
