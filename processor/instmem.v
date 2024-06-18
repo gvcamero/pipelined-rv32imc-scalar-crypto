@@ -27,13 +27,14 @@ module instmem (
 	input sel_ISR,
 
 	input [`PC_ADDR_BITS-1:0] addr,
-	output reg [`WORD_WIDTH-1:0] inst
+	output [`WORD_WIDTH-1:0] inst
 );
 	
 	wire [`WORD_WIDTH-1:0] prog;
 	// wire [`WORD_WIDTH-1:0] isr;
 	wire [`WORD_WIDTH-1:0] inst_be;
 	wire [`WORD_WIDTH-1:0] inst_t;
+	reg [`WORD_WIDTH-1:0] inst_reg;
 
 	reg [`WORD_WIDTH-1:0] instmem [0:`MEM_DEPTH-1];
 	
@@ -43,11 +44,12 @@ module instmem (
 
     assign inst_be = prog; // sel_ISR? isr : prog;
     assign inst_t = {inst_be[7:0], inst_be[15:8], inst_be[23:16], inst_be[31:24]};
+    assign inst = inst_t;
     
     always@(posedge clk) begin
         if (!nrst)
-            inst <= 32'd0;
+            inst_reg <= 32'd0;
         else
-            inst <= inst_t;
+            inst_reg <= inst_t;
     end
 endmodule

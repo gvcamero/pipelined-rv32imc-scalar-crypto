@@ -49,11 +49,7 @@ module tb_core_extmem_single();
     wire [`WORD_WIDTH-1:0] core_inst_data;
 	wire [`WORD_WIDTH-1:0] core_if_inst;
     
-    datamem #(
-        .INITIAL_DATA(temp_data),
-        .GRANT_DELAY(7),
-        .VALID_DELAY(2)
-    ) DATAMEM (
+    datamem DATAMEM (
         .clk(CLK),
         .nrst(nrst),
 

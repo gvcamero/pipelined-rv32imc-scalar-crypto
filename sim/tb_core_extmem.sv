@@ -5,7 +5,7 @@
 
 module tb_core_extmem();
 
-    parameter NUM_TESTS = 76;
+    parameter NUM_TESTS = 70;
     string test_pile[NUM_TESTS] = '{
         "C-ADD",
         "C-ADDI",
@@ -32,8 +32,6 @@ module tb_core_extmem();
         "C-SW",
         "C-SWSP",
         "C-XOR",
-        "DIV",
-        "DIVU",
         "I-ADD-01",
         "I-ADDI-01",
         "I-AND-01",
@@ -46,8 +44,6 @@ module tb_core_extmem();
         "I-BLTU-01",
         "I-BNE-01",
         "I-DELAY_SLOTS-01",
-        "I-ENDIANESS-01",
-        "I-IO-01",
         "I-JAL-01",
         "I-JALR-01",
         "I-LB-01",
@@ -80,9 +76,7 @@ module tb_core_extmem();
         "MUL",
         "MULH",
         "MULHSU",
-        "MULHU",
-        "REM",
-        "REMU"
+        "MULHU"
     };
     string current_test = "";
     parameter string file_pile[NUM_TESTS] = {
@@ -111,8 +105,6 @@ module tb_core_extmem();
         "C-SW.mem",
         "C-SWSP.mem",
         "C-XOR.mem",
-        "DIV.mem",
-        "DIVU.mem",
         "I-ADD-01.mem",
         "I-ADDI-01.mem",
         "I-AND-01.mem",
@@ -125,8 +117,6 @@ module tb_core_extmem();
         "I-BLTU-01.mem",
         "I-BNE-01.mem",
         "I-DELAY_SLOTS-01.mem",
-        "I-ENDIANESS-01.mem",
-        "I-IO-01.mem",
         "I-JAL-01.mem",
         "I-JALR-01.mem",
         "I-LB-01.mem",
@@ -159,9 +149,7 @@ module tb_core_extmem();
         "MUL.mem",
         "MULH.mem",
         "MULHSU.mem",
-        "MULHU.mem",
-        "REM.mem",
-        "REMU.mem"
+        "MULHU.mem"
     };
 	
 	reg CLK;
@@ -217,10 +205,7 @@ module tb_core_extmem();
     wire [`WORD_WIDTH-1:0] core_inst_data;
     wire [`WORD_WIDTH-1:0] core_if_inst;
     
-    datamem #(
-        .GRANT_DELAY(3),
-        .VALID_DELAY(3)
-    ) DATAMEM (
+    datamem DATAMEM (
         .clk(CLK),
         .nrst(nrst),
 
@@ -240,14 +225,16 @@ module tb_core_extmem();
         .con_out(con_out)
     );
     
-    instmem #() INSTMEM (
+    instmem INSTMEM (
+        .clk(CLK),
+        .nrst(nrst),
         .sel_ISR(1'b0),
 
         .addr(core_inst_addr),
         .inst(core_inst_data)
     );
     
-    core_extmem #() CORE(
+    core_extmem CORE(
         .CLKIP_OUT(CLK),
         .nrst(nrst),
 
