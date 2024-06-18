@@ -142,8 +142,8 @@ module datamem (
         .addr_in(data_addr[`BUS_BITS-1:2]),
         .addr(data_addr_t),
         
-        .read_in(data_out),
-        .read(data_out_t),
+        .read_in(data_out_t),
+        .read(data_out),
 
 		.write_in(data_in_little_e),
 		.write(data_write_t),
@@ -175,9 +175,7 @@ module datamem (
 		      num_cycles_addr_reg <= (data_addr == 14'h2010);
 		end
 	end
-	assign data_out = core_sel_reg ?  
-	                  ( num_cycles_addr_reg ? num_cycles_out : protocolmem_douta) 
-	                  : coremem_douta;
+	assign data_out_t = coremem_douta;
 
 	// Assigning con_out
 	reg protocol_sel_reg = 0;

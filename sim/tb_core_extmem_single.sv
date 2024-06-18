@@ -73,16 +73,16 @@ module tb_core_extmem_single();
         .con_out(con_out)
     );
     
-    instmem #(
-       .INSTMEM_PROGRAM(temp_inst)
-    ) INSTMEM (
+    instmem INSTMEM (
+        .clk(CLK),
+        .nrst(nrst),
         .sel_ISR(1'b0),
 
         .addr(core_inst_addr),
         .inst(core_inst_data)
     );
     
-    core_extmem #() CORE(
+    core_extmem CORE(
         .CLKIP_OUT(CLK),
         .nrst(nrst),
 
@@ -103,7 +103,7 @@ module tb_core_extmem_single();
     );
     
     wire [31:0] box;
-    answerkey_i #(.REF_OUT(temp_refm)) AK();
+    answerkey_i AK();
     assign box = {AK.memory[con_addr][7:0], AK.memory[con_addr][15:8], AK.memory[con_addr][23:16], AK.memory[con_addr][31:24]};
 
 	always
@@ -169,6 +169,10 @@ module tb_core_extmem_single();
 		mem_clk_counter = 0;
 		wb_clk_counter = 0;
 		rf_clk_counter = 0;
+		
+		$readmemh(temp_data, DATAMEM.COREMEM.ram_block);
+        $readmemh(temp_inst, INSTMEM.instmem);
+        $readmemh(temp_refm, AK.memory);
 
 		#100 nrst = 1;
 	end
