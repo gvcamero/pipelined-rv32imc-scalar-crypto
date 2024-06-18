@@ -231,10 +231,12 @@ module mem_protocol_handler (
                     
                     if (sim_delay > gnt_delay_r + val_delay_r) begin
                         valid <= 1;
+                        read_buffer <= read_in;
                         mem_state <= MEM_RESP_READ;    
                     end
                     else begin
                         valid <= 0;
+                        read_buffer <= 0;
                         mem_state <= MEM_GRANT;
                     end
                 end
