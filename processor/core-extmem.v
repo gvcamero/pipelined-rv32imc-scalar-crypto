@@ -357,6 +357,8 @@ module core_extmem (
 	wire ret_ISR;							// selects save_PC as input to PC
 	wire ISR_running;						// asserted if the ISR is running
 	wire [`PC_ADDR_BITS-1:0] save_PC;		// saves PC address of interrupted instruction
+	
+	wire eret_call;
 // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 
@@ -559,7 +561,8 @@ module core_extmem (
 		.ret_ISR(ret_ISR),
 
 		.ISR_running(ISR_running),
-		.save_PC(save_PC)
+		.save_PC(save_PC),
+		.eret_call(eret_call)
 	);
 
 	// PC + 4
@@ -573,6 +576,10 @@ module core_extmem (
 	always@(*) begin
 		if(ret_ISR) begin
 			if_pcnew = save_PC;
+			if_is_branch = 1;
+        end
+        else if (eret_call) begin
+            if_pcnew = 0;
 			if_is_branch = 1;
         end
 		else begin

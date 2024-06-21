@@ -45,7 +45,8 @@ module interrupt_controller(
 	output reg ret_ISR,				// selects save_PC as input to PC; return from ISR
 
 	output reg ISR_running,			// Determines if the ISR is running. Asserted until pipeline switches back from ISR to main program.
-	output reg [`PC_ADDR_BITS-1:0] save_PC		// saved PC address
+	output reg [`PC_ADDR_BITS-1:0] save_PC,		// saved PC address
+	output reg eret_call
 );
 
     // Declare wires & regs
@@ -164,22 +165,34 @@ module interrupt_controller(
             sel_ISR <= 0;
             ret_ISR <= 0;
             ISR_running <= 0;
+            eret_call <= 0;
         end else begin
-            // Initiate ISR end sequence once URET opcode is detected
-            if(exe_opcode == `OPC_URET) begin
-                ret_ISR <= 1;
-                sel_ISR <= 0;
+            if (ISR_running) begin
+                eret_call <= 0;
+                // Initiate ISR end sequence once URET opcode is detected
+                if(exe_opcode == `OPC_URET) begin
+                    ret_ISR <= 1;
+                    sel_ISR <= 0;
+                end
+    
+                // ISR_running logic
+                if((ISR_stall_counter == 3'd5) & !ISR_running) begin
+                    ISR_running <= 1;
+                    sel_ISR <= 1;
+                end else if((ISR_stall_counter == 3'd3) & ISR_running) begin
+                    ISR_running <= 0;
+                    ret_ISR <= 0;
+                end
             end
-
-			// ISR_running logic
-            if((ISR_stall_counter == 3'd5) & !ISR_running) begin
-                ISR_running <= 1;
-                sel_ISR <= 1;
-            end else if((ISR_stall_counter == 3'd3) & ISR_running) begin
-                ISR_running <= 0;
+            // ERET called outside interrupt context
+            else begin
                 ret_ISR <= 0;
+                sel_ISR <= 0;
+                if(exe_opcode == `OPC_URET || eret_call)
+                    eret_call <= 1;
+                else
+                    eret_call <= 0;
             end
-
         end
     end
 	
