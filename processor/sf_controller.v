@@ -220,10 +220,11 @@ module sf_controller(
 		  Thus, it corresponds to the EXE stage on the current cycle.
 
 	*/
-	reg id_prev_flush = 0;
-	reg exe_prev_flush = 0;
-	reg mem_prev_flush = 0;
-    reg wb_prev_flush = 0;
+	reg id_prev_flush;
+	reg exe_prev_flush;
+	reg mem_prev_flush;
+    reg wb_prev_flush;
+    reg mem_hold;
 
     // results of forwarding
     assign fw_exe_to_id_A = t_fw_exe_to_id_A;
@@ -241,15 +242,16 @@ module sf_controller(
     wire exe_jalr_hazard = hzd_exe_to_id_A && id_sel_opBR;							// LOAD -> JALR (EXE stage) will result in a one-cycle stall for IF and ID stages
     wire mem_jalr_hazard = hzd_mem_to_id_A && id_sel_opBR;                          // LOAD -> JALR (MEM stage) will result in a one-cycle stall for IF,ID, and EXE stages
     assign load_hazard = (hzd_mem_to_exe_A || hzd_mem_to_exe_B);                	// LOAD -> Other instruction
+    
     /* 
         Load hazard: wait until load instruction leaves MEM stage
     */
     
     // Stalls/Enables
-    assign if_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || dmem_stall || ~if_ready);
-    assign id_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || dmem_stall);
-    assign exe_stall = (load_hazard || mem_jalr_hazard || div_running || mul_stall || dmem_stall);
-    assign mem_stall = (load_hazard || dmem_stall) && ~dmem_ready;					
+    assign if_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready) || ~if_ready) || mem_hold;
+    assign id_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold;
+    assign exe_stall = (load_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold;
+    assign mem_stall = ((load_hazard || dmem_stall) && ~dmem_ready) || mem_hold;					
 
     // Flushes/Resets
     assign if_flush = ISR_PC_flush;
@@ -287,6 +289,7 @@ module sf_controller(
             exe_prev_flush <= 1'b0;
             mem_prev_flush <= 1'b0;
             wb_prev_flush <= 1'b0;
+            mem_hold <= 1'b0;
         end
         else begin
 			prev_nrst <= 1'b1;
@@ -297,6 +300,7 @@ module sf_controller(
             else
                 mem_prev_flush <= (exe_prev_flush ? exe_prev_flush : mem_flush);
             wb_prev_flush <= (mem_prev_flush ? mem_prev_flush : wb_flush);
+            mem_hold <= (dmem_stall && dmem_ready);
         end
     end
 endmodule

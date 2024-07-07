@@ -49,14 +49,24 @@ module mem_protocol_driver (
     
     localparam OP_LOAD = 1'b1;
     localparam OP_STORE = 1'b0;
+    
+    reg issue_op_t;
 
-    assign busy = (mem_state != MEM_START);
+    assign busy = (mem_state != MEM_START) || (issue_op && !issue_op_t);
     // assign ready = (mem_state == MEM_VALID_LOAD);
     
     assign addr_out = addr_buffer;
     assign load_out = load_buffer;
     assign write_out = write_buffer;
     assign wren_out = wren_buffer;
+    
+    always@(posedge clk) begin
+        if(!nrst)
+            issue_op_t <= 0;
+        else begin
+            issue_op_t <= (mem_state == MEM_START) ? issue_op : issue_op_t;
+        end
+    end
 
     always@(posedge clk) begin
         if(!nrst) begin
