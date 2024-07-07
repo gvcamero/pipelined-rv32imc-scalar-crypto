@@ -10,6 +10,7 @@ module mem_protocol_driver (
     input issue_op,
     output busy,
     output reg ready,                   // ready to read from load output
+    output reg delay_store,
 
     // Memory I/O
     input [`DATAMEM_BITS-1:0] issue_addr,
@@ -36,6 +37,7 @@ module mem_protocol_driver (
     reg [3:0] wren_buffer;
 
     reg [2:0] mem_state;
+    reg hold_state;
 
     localparam MEM_START = 3'h0;
     localparam MEM_WAIT_LOAD = 3'h1;
@@ -49,10 +51,8 @@ module mem_protocol_driver (
     
     localparam OP_LOAD = 1'b1;
     localparam OP_STORE = 1'b0;
-    
-    reg issue_op_t;
 
-    assign busy = (mem_state != MEM_START) || (issue_op && !issue_op_t);
+    assign busy = (mem_state != MEM_START) || (issue_op && !hold_state);
     // assign ready = (mem_state == MEM_VALID_LOAD);
     
     assign addr_out = addr_buffer;
@@ -61,10 +61,13 @@ module mem_protocol_driver (
     assign wren_out = wren_buffer;
     
     always@(posedge clk) begin
-        if(!nrst)
-            issue_op_t <= 0;
+        if(!nrst) begin
+            delay_store <= 0;
+            hold_state <= 0;
+        end
         else begin
-            issue_op_t <= (mem_state == MEM_START) ? issue_op : issue_op_t;
+            delay_store <= ((mem_state == MEM_START) || op_type == OP_STORE) ? 0 : hold_state;
+            hold_state <= (mem_state == MEM_START) ? issue_op : hold_state;
         end
     end
 

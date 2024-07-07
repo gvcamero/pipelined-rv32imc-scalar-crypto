@@ -43,6 +43,15 @@ module pipereg_exe_mem(
 	input [`REGFILE_BITS-1:0] exe_rd,
 	output reg [`REGFILE_BITS-1:0] mem_rd,
 
+	input [`WORD_WIDTH-1:0] exe_rstore,
+	output reg [`WORD_WIDTH-1:0] mem_rstore,
+
+	input exe_is_stype,
+	output reg mem_is_stype,
+
+	input [1:0] exe_store_select,
+	output reg [1:0] mem_store_select,
+
 	// Control signals
 	input [3:0] exe_dm_write,
 	output reg [3:0] mem_dm_write,
@@ -65,6 +74,9 @@ module pipereg_exe_mem(
 			mem_storedata <= 0;
 			mem_imm <= 0;
 			mem_rd <= 0;
+			mem_rstore <= 0;
+			mem_is_stype <= 0;
+			mem_store_select <= 0;
 
 			// Control signals
 			mem_dm_write <= 0;
@@ -80,6 +92,9 @@ module pipereg_exe_mem(
                 mem_storedata <= 0;
                 mem_imm <= 0;
                 mem_rd <= 0;
+				mem_rstore <= 0;
+				mem_is_stype <= 0;
+				mem_store_select <= 0;
     
                 // Control signals
                 mem_dm_write <= 0;
@@ -93,6 +108,9 @@ module pipereg_exe_mem(
                 mem_storedata <= exe_storedata;
                 mem_imm <= exe_imm;
                 mem_rd <= exe_rd;
+				mem_rstore <= exe_rstore;
+				mem_is_stype <= exe_is_stype;
+				mem_store_select <= exe_store_select;
     
                 // Control signals
                 mem_dm_write <= exe_dm_write;
@@ -107,6 +125,9 @@ module pipereg_exe_mem(
                 mem_storedata <= mem_storedata;
                 mem_imm <= mem_imm;
                 mem_rd <= mem_rd;
+				mem_rstore <= mem_rstore;
+				mem_is_stype <= mem_is_stype;
+				mem_store_select <= mem_store_select;
     
                 // Control signals
                 mem_dm_write <= mem_dm_write;

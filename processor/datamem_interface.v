@@ -33,6 +33,7 @@ module datamem_interface(
         // Core Control I/O
         input [`REGFILE_BITS-1:0] mem_rd,
         input stall,
+        output store_sel,
         output read_ready
     ); 
     
@@ -44,7 +45,7 @@ module datamem_interface(
     
     wire is_load = (sel_data == 3'd3) && (mem_rd != 0);
     wire is_mem_op = sb_is_stype || is_load;
-    wire [`DATAMEM_BITS-1:0] addr_in = is_load ? mem_addr_in : exe_addr_in;
+    wire [`DATAMEM_BITS-1:0] addr_in = (is_load || store_sel) ? mem_addr_in : exe_addr_in;
     /*
     reg hold;
     
@@ -81,6 +82,7 @@ module datamem_interface(
         
         .issue_op(is_mem_op), // && ~hold),
         .busy(dm_stall),
+        .delay_store(store_sel),
         .ready(read_ready),
         
         .issue_addr(addr_in),

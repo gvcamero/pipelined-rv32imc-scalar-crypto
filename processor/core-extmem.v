@@ -183,6 +183,9 @@ module core_extmem (
 	wire [`WORD_WIDTH-1:0] mem_storedata;	// Input data to DATAMEM
 	wire [`WORD_WIDTH-1:0] mem_imm;			// 32bit Immediate
 	wire [`REGFILE_BITS-1:0]  mem_rd;		// Destination register
+	wire [`WORD_WIDTH-1:0] mem_rstore;		// Input data to STOREBLOCK
+	wire [1:0] mem_store_select;
+	wire mem_is_stype;
 
 	// Control signals
 	wire [3:0] mem_dm_write;				// For MEM stage
@@ -192,6 +195,7 @@ module core_extmem (
 
 	// MEM Stage Datapath Signals
 	wire[`WORD_WIDTH-1:0] mem_DATAMEMout;	// Output of DATAMEM
+	wire [`WORD_WIDTH-1:0] sb_rstore;		// Input data to STOREBLOCK
 
 	// Inputs to MEM/WB Pipereg
 	wire [`WORD_WIDTH-1:0] mem_loaddata;	// Output of LOAD BLOCK
@@ -917,6 +921,9 @@ module core_extmem (
 		.exe_storedata(exe_storedata),		.mem_storedata(mem_storedata),
 		.exe_imm(exe_imm),					.mem_imm(mem_imm),
 		.exe_rd(exe_rd),					.mem_rd(mem_rd),
+		.exe_rstore(exe_rstore),			.mem_rstore(mem_rstore),
+		.exe_is_stype(exe_is_stype),		.mem_is_stype(mem_is_stype),
+		.exe_store_select(exe_store_select),	.mem_store_select(mem_store_select),
 
 		// Control signals
 		.exe_dm_write(exe_dm_write),		.mem_dm_write(mem_dm_write),
@@ -930,12 +937,18 @@ module core_extmem (
 // MEM Stage =====================================================================
     wire mem_dm_en;
     wire [`DATAMEM_BITS:0] mem_dm_addr;
+	wire mem_sel_store;
     
 	assign ext_data_write = exe_dm_write;
 	assign ext_data_addr = mem_dm_addr;	
 	assign ext_data_store = exe_storedata;	
 	assign mem_DATAMEMout = ext_data_load;
 	assign ext_data_req = mem_dm_en;
+
+	assign sb_rstore = mem_sel_store ? mem_rstore : exe_rstore;
+	wire [1:0] sb_store_select = mem_sel_store ? mem_store_select : exe_store_select;
+	wire [1:0] sb_byte_offset = mem_sel_store ? mem_ALUout[1:0] : exe_ALUout[1:0];
+	assign sb_is_stype = mem_sel_store ? mem_is_stype : exe_is_stype;
 	
 	datamem_interface DM_I(
 	     .clk(CLKIP_OUT),
@@ -947,10 +960,10 @@ module core_extmem (
 	     .mem_addr_in(mem_ALUout[`DATAMEM_BITS+1:2]),
 	     .addr_out(mem_dm_addr),
 	     
-	     .sb_opB(exe_rstore),
-         .sb_byte_offset(exe_ALUout[1:0]),
-         .sb_store_select(exe_store_select),
-         .sb_is_stype(exe_is_stype),
+	     .sb_opB(sb_rstore),
+         .sb_byte_offset(sb_byte_offset),
+         .sb_store_select(sb_store_select),
+         .sb_is_stype(sb_is_stype),
          .sb_data(exe_storedata),
          .sb_dm_write(exe_dm_write),
          
@@ -964,6 +977,7 @@ module core_extmem (
          .dm_valid(ext_data_valid),
          
          .dm_stall(mem_dm_stall),
+		 .store_sel(mem_sel_store),
          .mem_rd(mem_rd),
          .read_ready(mem_dm_ready)
 	);
