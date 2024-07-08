@@ -11,6 +11,7 @@ module mem_protocol_driver (
     output busy,
     output reg ready,                   // ready to read from load output
     output reg delay_store,
+    input is_load,
 
     // Memory I/O
     input [`DATAMEM_BITS-1:0] issue_addr,
@@ -47,7 +48,7 @@ module mem_protocol_driver (
     localparam MEM_GRANT_STORE = 3'h5;
     // localparam MEM_CLEANUP = 3'h7;
 
-    wire op_type = (wren == 3'd0);
+    wire op_type = is_load;
     
     localparam OP_LOAD = 1'b1;
     localparam OP_STORE = 1'b0;

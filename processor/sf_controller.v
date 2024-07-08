@@ -139,6 +139,7 @@ module sf_controller(
 	// Forwarding to EXE stage
 	output fw_wb_to_exe_A,
 	output fw_wb_to_exe_B,
+	output fw_mem_to_exe_B,
     output load_hazard          // result of having a L[W/H/B] -> EXE hazard
 );
 
@@ -241,7 +242,9 @@ module sf_controller(
     
     wire exe_jalr_hazard = hzd_exe_to_id_A && id_sel_opBR;							// LOAD -> JALR (EXE stage) will result in a one-cycle stall for IF and ID stages
     wire mem_jalr_hazard = hzd_mem_to_id_A && id_sel_opBR;                          // LOAD -> JALR (MEM stage) will result in a one-cycle stall for IF,ID, and EXE stages
-    assign load_hazard = (hzd_mem_to_exe_A || hzd_mem_to_exe_B);                	// LOAD -> Other instruction
+    assign load_hazard = hzd_mem_to_exe_A || (hzd_mem_to_exe_B && ~(exe_opcode == `OPC_STYPE));                	// LOAD -> Other instruction
+																					// Explicit load hazards removed for load->store sequences
+	assign fw_mem_to_exe_B = hzd_mem_to_exe_B;
     
     /* 
         Load hazard: wait until load instruction leaves MEM stage
@@ -263,17 +266,6 @@ module sf_controller(
     // Enables
 	reg prev_nrst = 0;
     wire shut_down = (prev_nrst && ~nrst);
-	// A note: the shut_down signal is meant to be a stopgap measure that should be re-evaluated depending on
-	// how the processor core is meant to reset or not between cases of nrst deasserting.
-	// In other words, this signal solves a problem where the processor does not actually reset when nrst is deasserted
-	// due to the nature of the clock enable signals. (Alternatively, all registers could be changed to asynchronous resets, but
-	// it's considered bad practice, so we didn't do it).
-	//
-	// The processor resetting when nrst is deasserted is intended, but other behavior may be desired.
-	// For example, a signal to put the processor to sleep until it is meant to wake up, without going through polling loop
-	// or waiting for an interrupt.
-	//
-	// I'm definitely overthinking this.
 
     assign if_clk_en = shut_down || (~(if_stall || (loop_jump && ~ISR_pipe_flush)) && nrst);
     assign id_clk_en = shut_down || (~(id_stall || (loop_jump && ~ISR_pipe_flush)) && nrst);

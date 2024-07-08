@@ -84,6 +84,7 @@ module datamem_interface(
         .busy(dm_stall),
         .delay_store(store_sel),
         .ready(read_ready),
+        .is_load(is_load),
         
         .issue_addr(addr_in),
         .addr_out(addr_out_t),

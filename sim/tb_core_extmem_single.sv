@@ -391,12 +391,15 @@ module tb_core_extmem_single();
             max_data_addr <= 0;
         else if(!done) 
             if(core_data_request) begin
+                /*
                 if (max_data_addr > 255) begin
                     max_data_addr = 256;
                 end
                 else begin
-                    max_data_addr <= core_data_addr;
-                end
+                */
+                if (max_data_addr < core_data_addr[`DATAMEM_BITS-1:2])
+                    max_data_addr <= core_data_addr[`DATAMEM_BITS-1:2];
+                //end
             end
     end
 

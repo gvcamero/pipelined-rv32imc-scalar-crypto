@@ -249,6 +249,7 @@ module core_extmem (
     wire fw_wb_to_id_B;
     wire fw_wb_to_exe_A;
     wire fw_wb_to_exe_B;
+	wire fw_mem_to_exe_B;
 	wire load_hazard;						// Asserts if a load hazard is detected
 // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
@@ -458,6 +459,7 @@ module core_extmem (
 
 		.fw_wb_to_exe_A(fw_wb_to_exe_A),
 		.fw_wb_to_exe_B(fw_wb_to_exe_B),
+		.fw_mem_to_exe_B(fw_mem_to_exe_B),
 		.load_hazard(load_hazard)
 	);
 
@@ -828,7 +830,7 @@ module core_extmem (
 	assign opA = fw_wb_to_exe_A? wb_loaddata : exe_fwdopA;
 	assign opB = (fw_wb_to_exe_B && !exe_is_stype) ? wb_loaddata : exe_fwdopB;
 
-	assign exe_rstore = (fw_wb_to_exe_B && exe_is_stype)? wb_loaddata : exe_fwdstore;
+	assign exe_rstore = fw_mem_to_exe_B ? mem_loaddata : fw_wb_to_exe_B ? wb_loaddata : exe_fwdstore;
 
 	alu ALU(
 		.CLK(CLKIP_OUT),
