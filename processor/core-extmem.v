@@ -30,7 +30,11 @@ module core_extmem (
 	input [`INT_SIG_WIDTH-1:0] int_sig,
 	
 	// Data Memory I/O
-	output [3:0] ext_data_write,
+	`ifdef FEATURE_BIT_ENABLE
+		output [31:0] ext_data_write,
+	`else
+		output [3:0] ext_data_write,
+	`endif
 	output [`BUS_BITS-1:0] ext_data_addr,	
 	output [`DATAMEM_WIDTH-1:0] ext_data_store,	
 	input [`DATAMEM_WIDTH-1:0] ext_data_load,
@@ -158,7 +162,11 @@ module core_extmem (
 	wire exe_div_valid;						// For EXE stage
 	wire [1:0] exe_div_op;					// For EXE stage
 	wire exe_is_stype;						// For EXE stage
-	wire [3:0] exe_dm_write;				// For MEM stage
+	`ifdef FEATURE_BIT_ENABLE
+        wire [31:0] exe_dm_write;				// For MEM stage
+    `else
+		wire [3:0] exe_dm_write;				// For MEM stage
+    `endif
 	wire exe_wr_en;							// For WB stage
 	wire [2:0] exe_dm_select;				// For MEM stage
 	wire [2:0] exe_sel_data;				// For WB stage

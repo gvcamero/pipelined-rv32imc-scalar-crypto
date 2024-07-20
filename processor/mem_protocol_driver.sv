@@ -23,8 +23,13 @@ module mem_protocol_driver (
     input [`WORD_WIDTH-1:0] store_in,
     output reg [`WORD_WIDTH-1:0] write_out,
     
-    input [3:0] wren, 
-    output reg [3:0] wren_out,
+    `ifdef FEATURE_BIT_ENABLE
+        input [31:0] wren, 
+        output reg [31:0] wren_out,
+    `else
+        input [3:0] wren, 
+        output reg [3:0] wren_out,
+    `endif
         
     // Memory Control Signals
     output reg req,
@@ -35,7 +40,11 @@ module mem_protocol_driver (
     reg [`DATAMEM_BITS-1:0] addr_buffer;
     reg [`WORD_WIDTH-1:0] load_buffer;
     reg [`WORD_WIDTH-1:0] write_buffer;
-    reg [3:0] wren_buffer;
+    `ifdef FEATURE_BIT_ENABLE
+        reg [31:0] wren_buffer;
+    `else
+        reg [3:0] wren_buffer;
+    `endif
 
     reg [2:0] mem_state;
     reg hold_state;
@@ -77,7 +86,7 @@ module mem_protocol_driver (
             addr_buffer <= 0;
             load_buffer <= 0;
             write_buffer <= 0;
-            wren_buffer <= 4'd0;
+            wren_buffer <= 0;
             req <= 0;
 
             mem_state <= MEM_START;

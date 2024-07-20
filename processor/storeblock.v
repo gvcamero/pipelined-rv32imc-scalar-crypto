@@ -17,6 +17,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 `timescale 1ns / 1ps
+`include "config.vh"
 
 module storeblock(
     input [31:0] opB,
@@ -25,8 +26,19 @@ module storeblock(
     input is_stype,
     input load_in_mem,
     output [31:0] data,
-    output reg [3:0] dm_write
+    `ifdef FEATURE_BIT_ENABLE
+        output [31:0] dm_write
+    `else
+        output [3:0] dm_write
+    `endif
     );
+
+    reg [3:0] dm_write_t;
+    `ifdef FEATURE_BIT_ENABLE
+        assign dm_write = {{8{dm_write_t[3]}}, {8{dm_write_t[2]}}, {8{dm_write_t[1]}}, {8{dm_write_t[0]}}};
+    `else
+        assign dm_write = dm_write_t;
+    `endif
     
     parameter sw = 2'd2;
     parameter sh = 2'd1;
@@ -45,30 +57,30 @@ module storeblock(
             case(store_select)
                 sb:
                     case({is_stype, byte_offset})
-                        3'b100: dm_write = 4'b1000;
-                        3'b101: dm_write = 4'b0100;
-                        3'b110: dm_write = 4'b0010;
-                        3'b111: dm_write = 4'b0001;
-                        default: dm_write = 4'b0000;
+                        3'b100: dm_write_t = 4'b1000;
+                        3'b101: dm_write_t = 4'b0100;
+                        3'b110: dm_write_t = 4'b0010;
+                        3'b111: dm_write_t = 4'b0001;
+                        default: dm_write_t = 4'b0000;
                     endcase
                 sh:
                     case({is_stype, byte_offset})
-                        3'b100: dm_write = 4'b1100;
-                        3'b110: dm_write = 4'b0011;
-                        default: dm_write = 4'b0000;
+                        3'b100: dm_write_t = 4'b1100;
+                        3'b110: dm_write_t = 4'b0011;
+                        default: dm_write_t = 4'b0000;
                     endcase
                 sw:
                     case({is_stype, byte_offset})
-                        3'b100: dm_write = 4'b1111;
-                        default: dm_write = 4'b0000;
+                        3'b100: dm_write_t = 4'b1111;
+                        default: dm_write_t = 4'b0000;
                     endcase
 
-                default: dm_write = 4'b0000;
+                default: dm_write_t = 4'b0000;
     		endcase
         end
         else begin
             // prioritize loads over stores
-            dm_write = 4'b0000;
+            dm_write_t = 4'b0000;
         end 
 	end
 endmodule

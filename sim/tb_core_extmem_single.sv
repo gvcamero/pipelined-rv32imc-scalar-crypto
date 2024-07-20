@@ -23,7 +23,15 @@ module tb_core_extmem_single();
     localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/I-LB-01.mem");
     localparam string temp_refm = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/mem/I-LB-01.mem");
 
-	wire [3:0] core_data_write;
+	wire [3:0] dmem_data_write;
+	`ifdef FEATURE_BIT_ENABLE
+		wire [`WORD_WIDTH-1:0] core_data_write;
+		assign dmem_data_write = {core_data_write[24], core_data_write[16], core_data_write[8], core_data_write[0]};
+	`else
+		wire [3:0] core_data_write;
+		assign dmem_data_write = core_data_write;
+	`endif
+
     wire [`DATAMEM_BITS-1:0] core_data_addr;	
     wire [`BUS_BITS-1:0] bus_data_addr = {2'b0, core_data_addr};	
     wire [`DATAMEM_WIDTH-1:0] core_data_store;	
@@ -53,7 +61,7 @@ module tb_core_extmem_single();
         .clk(CLK),
         .nrst(nrst),
 
-        .dm_write(core_data_write),
+        .dm_write(dmem_data_write),
         .data_addr(bus_data_addr),        
         .data_in(core_data_store),
         .data_req(core_data_request),

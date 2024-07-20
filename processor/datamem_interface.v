@@ -17,7 +17,11 @@ module datamem_interface(
         input [1:0] sb_store_select,
         input sb_is_stype,
         output [31:0] sb_data,
-        output [3:0] sb_dm_write,
+        `ifdef FEATURE_BIT_ENABLE
+            output [31:0] sb_dm_write,
+        `else
+            output [3:0] sb_dm_write,
+        `endif
         // Load Block I/O
         input [31:0] lb_data,    
         input [1:0] lb_byte_offset,    
@@ -41,7 +45,11 @@ module datamem_interface(
     wire [31:0] sb_data_t;
     wire [`DATAMEM_BITS-1:0] addr_out_t;
     assign addr_out = {addr_out_t, 2'b0}; 
-    wire [3:0] sb_dm_write_t;
+    `ifdef FEATURE_BIT_ENABLE
+        wire [31:0] sb_dm_write_t;
+    `else
+        wire [31:0] sb_dm_write_t
+    `endif
     
     wire is_load = (sel_data == 3'd3) && (mem_rd != 0);
     wire is_mem_op = sb_is_stype || is_load;

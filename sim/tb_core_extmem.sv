@@ -193,7 +193,15 @@ module tb_core_extmem();
     
     reg suite_done [NUM_TESTS];
     
-    wire [3:0] core_data_write;
+    wire [3:0] dmem_data_write;
+	`ifdef FEATURE_BIT_ENABLE
+		wire [`WORD_WIDTH-1:0] core_data_write;
+		assign dmem_data_write = {core_data_write[24], core_data_write[16], core_data_write[8], core_data_write[0]};
+	`else
+		wire [3:0] core_data_write;
+		assign dmem_data_write = core_data_write;
+	`endif
+    
     wire [`BUS_BITS-1:0] core_data_addr;	
     wire [`DATAMEM_WIDTH-1:0] core_data_store;	
     wire [`DATAMEM_WIDTH-1:0] core_data_load;
@@ -209,7 +217,7 @@ module tb_core_extmem();
         .clk(CLK),
         .nrst(nrst),
 
-        .dm_write(core_data_write),
+        .dm_write(dmem_data_write),
         .data_addr(core_data_addr),        
         .data_in(core_data_store),
         .data_req(core_data_request),
@@ -317,7 +325,8 @@ module tb_core_extmem();
                     max_data_addr = 256;
                 end
                 else begin
-                    max_data_addr <= core_data_addr[`BUS_BITS-1:2];
+                    if (max_data_addr < core_data_addr[`DATAMEM_BITS-1:2])
+                        max_data_addr <= core_data_addr[`DATAMEM_BITS-1:2];
                 end
             end
     end
