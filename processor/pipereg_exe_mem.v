@@ -53,8 +53,8 @@ module pipereg_exe_mem(
 	output reg [1:0] mem_store_select,
 
 	// Control signals
-	input [3:0] exe_dm_write,
-	output reg [3:0] mem_dm_write,
+	// input [3:0] exe_dm_write,
+	// output reg [3:0] mem_dm_write,
 
 	input exe_wr_en,
 	output reg mem_wr_en,
@@ -79,7 +79,7 @@ module pipereg_exe_mem(
 			mem_store_select <= 0;
 
 			// Control signals
-			mem_dm_write <= 0;
+			// mem_dm_write <= 0;
 			mem_wr_en <= 0;
 			mem_dm_select <= 0;
 			mem_sel_data <= 0;
@@ -97,7 +97,7 @@ module pipereg_exe_mem(
 				mem_store_select <= 0;
     
                 // Control signals
-                mem_dm_write <= 0;
+                // mem_dm_write <= 0;
                 mem_wr_en <= 0;
                 mem_dm_select <= 0;
                 mem_sel_data <= 0;
@@ -113,7 +113,7 @@ module pipereg_exe_mem(
 				mem_store_select <= exe_store_select;
     
                 // Control signals
-                mem_dm_write <= exe_dm_write;
+                // mem_dm_write <= exe_dm_write;
                 mem_wr_en <= exe_wr_en;
                 mem_dm_select <= exe_dm_select;
                 mem_sel_data <= exe_sel_data;
@@ -130,7 +130,7 @@ module pipereg_exe_mem(
 				mem_store_select <= mem_store_select;
     
                 // Control signals
-                mem_dm_write <= mem_dm_write;
+                // mem_dm_write <= mem_dm_write;
                 mem_wr_en <= mem_wr_en;
                 mem_dm_select <= mem_dm_select;
                 mem_sel_data <= mem_sel_data;

@@ -940,7 +940,7 @@ assign ext_data_wr_en = |ext_data_write;
 		.exe_store_select(exe_store_select),	.mem_store_select(mem_store_select),
 
 		// Control signals
-		.exe_dm_write(exe_dm_write),		.mem_dm_write(mem_dm_write),
+		// .exe_dm_write(exe_dm_write),		.mem_dm_write(mem_dm_write),
 		.exe_wr_en(exe_wr_en),				.mem_wr_en(mem_wr_en),
 		.exe_dm_select(exe_dm_select),		.mem_dm_select(mem_dm_select),
 		.exe_sel_data(exe_sel_data),		.mem_sel_data(mem_sel_data)
