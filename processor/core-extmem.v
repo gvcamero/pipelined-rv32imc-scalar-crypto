@@ -36,6 +36,7 @@ module core_extmem (
 		output [3:0] ext_data_write,
 	`endif
 	output [`BUS_BITS-1:0] ext_data_addr,	
+	output ext_data_wr_en,
 	output [`DATAMEM_WIDTH-1:0] ext_data_store,	
 	input [`DATAMEM_WIDTH-1:0] ext_data_load,
 	output ext_data_req,
@@ -51,6 +52,8 @@ module core_extmem (
 	output [`WORD_WIDTH-1:0] ext_if_inst,
 	output [`WORD_WIDTH-1:0] ext_id_inst
 );
+
+assign ext_data_wr_en = |ext_data_write;
 	
 /******************************** DECLARING WIRES *******************************/
 
