@@ -284,6 +284,7 @@ assign ext_data_wr_en = |ext_data_write;
 	wire rf_clk_en;
 	
 	wire mem_dm_stall;          // Stall from load/store operation
+	wire mem_dm_ready;			// Load state ready
 	
 	wire if_stall;			// Controls Interrupt Controller stall
 	wire id_stall;			// Controls BHT stall & flush logic
@@ -539,7 +540,7 @@ assign ext_data_wr_en = |ext_data_write;
 
 // IF Stage ======================================================================
     
-	instmem_interface #() IM_I (
+	instmem_interface IM_I (
         .clk(CLKIP_OUT),
         .nrst(nrst),
         .if_flush(if_flush),
@@ -951,6 +952,7 @@ assign ext_data_wr_en = |ext_data_write;
     wire mem_dm_en;
     wire [`DATAMEM_BITS:0] mem_dm_addr;
 	wire mem_sel_store;
+	wire sb_is_stype;
     
 	assign ext_data_write = exe_dm_write;
 	assign ext_data_addr = mem_dm_addr;	
