@@ -23,7 +23,7 @@
 `include "config.vh"
 
 module core_extmem (
-	input CLKIP_OUT,			// Input clock
+	input clk,			// Input clock
 	input nrst,
 
 	// Interrupt signals
@@ -383,7 +383,7 @@ assign ext_data_wr_en = |ext_data_write;
 /*********************** DATAPATH (INSTANTIATING MODULES) ***********************/
 // STALL, FLUSH, and FORWARDING Controller =======================================
 	sf_controller SF_CONTROLLER(
-		.clk(CLKIP_OUT),
+		.clk(clk),
 		.nrst(nrst),
 
 		// Inputs from IF stage
@@ -484,7 +484,7 @@ assign ext_data_wr_en = |ext_data_write;
         )
         en_iF 
         (
-            .I(CLKIP_OUT),
+            .I(clk),
             .CE(if_clk_en),
             .O(if_clk)
         );
@@ -492,7 +492,7 @@ assign ext_data_wr_en = |ext_data_write;
         BUFGCE #(
            .SIM_DEVICE("7SERIES")
         ) en_id (
-            .I(CLKIP_OUT),
+            .I(clk),
             .CE(id_clk_en),
             .O(id_clk)
         );
@@ -500,7 +500,7 @@ assign ext_data_wr_en = |ext_data_write;
         BUFGCE #(
            .SIM_DEVICE("7SERIES")
         ) en_exe (
-            .I(CLKIP_OUT),
+            .I(clk),
             .CE(exe_clk_en),
             .O(exe_clk)
         );
@@ -508,7 +508,7 @@ assign ext_data_wr_en = |ext_data_write;
         BUFGCE #(
            .SIM_DEVICE("7SERIES")
         ) en_mem (
-            .I(CLKIP_OUT),
+            .I(clk),
             .CE(mem_clk_en),
             .O(mem_clk)
         );
@@ -516,7 +516,7 @@ assign ext_data_wr_en = |ext_data_write;
         BUFGCE #(
            .SIM_DEVICE("7SERIES")
         ) en_wb (
-            .I(CLKIP_OUT),
+            .I(clk),
             .CE(wb_clk_en),
             .O(wb_clk)
         );
@@ -524,24 +524,24 @@ assign ext_data_wr_en = |ext_data_write;
         BUFGCE #(
            .SIM_DEVICE("7SERIES")
         ) en_rf(
-            .I(CLKIP_OUT),
+            .I(clk),
             .CE(rf_clk_en),
             .O(rf_clk)
         );
 	`else
-        assign if_clk = CLKIP_OUT;
-        assign id_clk = CLKIP_OUT;
-        assign exe_clk = CLKIP_OUT;
-        assign mem_clk = CLKIP_OUT;
-        assign wb_clk = CLKIP_OUT;
-        assign rf_clk = CLKIP_OUT;
+        assign if_clk = clk;
+        assign id_clk = clk;
+        assign exe_clk = clk;
+        assign mem_clk = clk;
+        assign wb_clk = clk;
+        assign rf_clk = clk;
     `endif
 
 
 // IF Stage ======================================================================
     
 	instmem_interface IM_I (
-        .clk(CLKIP_OUT),
+        .clk(clk),
         .nrst(nrst),
         .if_flush(if_flush),
     
@@ -559,7 +559,7 @@ assign ext_data_wr_en = |ext_data_write;
     );
 
 	interrupt_controller INT_CON(
-		.clk(CLKIP_OUT),
+		.clk(clk),
 		.nrst(nrst),
 		.stall(if_stall),
 
@@ -845,7 +845,7 @@ assign ext_data_wr_en = |ext_data_write;
 	assign exe_rstore = fw_mem_to_exe_B ? mem_loaddata : fw_wb_to_exe_B ? wb_loaddata : exe_fwdstore;
 
 	alu ALU(
-		.CLK(CLKIP_OUT),
+		.CLK(clk),
 		.nrst(nrst),
 		.load_hazard(load_hazard),
 
@@ -862,7 +862,7 @@ assign ext_data_wr_en = |ext_data_write;
     
     `ifdef FEATURE_DIV
 	divider_unit DIVIDER(
-		.CLK(CLKIP_OUT),
+		.CLK(clk),
 		.nrst(nrst),
 		.load_hazard(load_hazard),
 
@@ -884,7 +884,7 @@ assign ext_data_wr_en = |ext_data_write;
 	
 
 	branchpredictor BRANCHPREDICTOR(
-		.CLK(CLKIP_OUT),
+		.CLK(clk),
 		.nrst(nrst),
 
 		.ISR_running(ISR_running),
@@ -967,7 +967,7 @@ assign ext_data_wr_en = |ext_data_write;
 	assign sb_is_stype = mem_sel_store ? mem_is_stype : exe_is_stype;
 	
 	datamem_interface DM_I(
-	     .clk(CLKIP_OUT),
+	     .clk(clk),
 	     .nrst(nrst),
 	     .sel_data(mem_sel_data),
 	     .mem_flush(mem_flush),

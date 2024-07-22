@@ -243,7 +243,7 @@ module tb_core_extmem();
     );
     
     core_extmem CORE(
-        .CLKIP_OUT(CLK),
+        .clk(CLK),
         .nrst(nrst),
 
         .int_sig(int_sig),
