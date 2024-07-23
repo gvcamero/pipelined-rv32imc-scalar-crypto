@@ -951,7 +951,6 @@ assign ext_data_wr_en = |ext_data_write;
 // MEM Stage =====================================================================
     wire mem_dm_en;
     wire [`BUS_BITS-1:0] mem_dm_addr;
-	assign mem_dm_addr[1:0] = 2'b0;
 	wire mem_sel_store;
 	wire sb_is_stype;
     
@@ -974,7 +973,7 @@ assign ext_data_wr_en = |ext_data_write;
 	     
 	     .exe_addr_in(exe_ALUout[`DATAMEM_BITS+1:2]),
 	     .mem_addr_in(mem_ALUout[`DATAMEM_BITS+1:2]),
-	     .addr_out(mem_dm_addr[`BUS_BITS-1:2]),
+	     .addr_out(mem_dm_addr),
 	     
 	     .sb_opB(sb_rstore),
          .sb_byte_offset(sb_byte_offset),
