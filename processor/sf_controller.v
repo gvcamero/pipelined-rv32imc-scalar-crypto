@@ -264,7 +264,7 @@ module sf_controller(
     assign wb_flush = mem_stall;
 
     // Enables
-	reg prev_nrst = 0;
+	reg prev_nrst;
     wire shut_down = (prev_nrst && ~nrst);
 
     assign if_clk_en = shut_down || (~(if_stall || (loop_jump && ~ISR_pipe_flush)) && nrst);

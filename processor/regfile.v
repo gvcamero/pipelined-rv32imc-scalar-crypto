@@ -37,10 +37,6 @@ module regfile(
 	assign src2_out = regfile[src2_addr];
    
 	integer i;
-	initial begin
-		for(i = 0; i < `REGFILE_SIZE; i = i + 1)
-			regfile[i]	=	0;
-	end
 	
 	// Write regfile
 	always@(posedge clk)

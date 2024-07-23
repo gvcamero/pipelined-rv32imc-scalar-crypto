@@ -283,14 +283,6 @@ module branchpredictor(
 	// WRITES TO FIFO_COUNTER & HISTORY_TABLE
 	// Initialize registers
 	integer i;
-	initial begin
-		for(i = 0; i < (`BHT_ENTRY/4); i=i+1) begin
-			fifo_counter[i] <= 2'b0;
-		end
-		for(i = 0; i < `BHT_ENTRY; i=i+1) begin
-			history_table[i] <= {`BHT_ENTRY_BITS{1'b0}};
-		end
-	end
 	
 	always@(posedge CLK) begin
 		if(!nrst) begin

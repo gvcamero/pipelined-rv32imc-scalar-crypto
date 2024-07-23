@@ -50,7 +50,7 @@ module interrupt_controller(
 );
 
     // Declare wires & regs
-	integer i = 0;					// Used for FOR loops
+	integer i;					// Used for FOR loops
     reg [2:0] ISR_stall_counter;	// Used for counting how many cycles the pipeline should "stall" before running the ISR; start/end sequence initiates once counter value != 0
     reg [`INT_SIG_WIDTH-1:0] ISR_en;// Interrupts can be triggered only if this signal is asserted
 	reg interrupt_captured;			// Asserts for 1 cycle when int_sig & ISR_en are both asserted
@@ -82,19 +82,6 @@ module interrupt_controller(
 	//		+ When a branch is taken during start sequence; This is to make sure that save_PC also captures the branch target address
 	// It is not asserted when the ISR is running & during the end sequence (since there is no need to update save_PC during these conditions)
     assign save_PC_en = (interrupt_captured || (ISR_stall & ((exe_correction!=0) | if_prediction | (id_sel_pc & !id_jump_in_bht)))) & !(ISR_running);
-
-    // Initializing registers
-	initial begin
-		sel_ISR <= 0;
-		ret_ISR <= 0;
-        interrupt_captured <= 0;
-		save_PC <= 0;
-		ISR_running <= 0;
-		ISR_stall_counter <= 0;
-		
-		for(i = 0; i < `INT_SIG_WIDTH; i = i+1)
-			ISR_en[i] <= 1'b1;
-	end
 
     // This controls save_PC
     always@(posedge clk) begin
