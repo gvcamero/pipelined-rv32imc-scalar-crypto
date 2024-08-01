@@ -165,7 +165,7 @@ module tb_core_extmem();
 	reg [`WORD_WIDTH:0] last_inst;
 	
 	always
-	   #10 CLK = ~CLK;		// 50MHz clock
+	   #20 CLK = ~CLK;		// 25MHz clock
     
 		
 	
@@ -212,6 +212,7 @@ module tb_core_extmem();
     wire [`PC_ADDR_BITS-1:0] core_inst_addr;
     wire [`WORD_WIDTH-1:0] core_inst_data;
     wire [`WORD_WIDTH-1:0] core_if_inst;
+    wire [`WORD_WIDTH-1:0] core_id_inst;
     
     datamem DATAMEM (
         .clk(CLK),
@@ -245,8 +246,9 @@ module tb_core_extmem();
     core_extmem CORE(
         .clk(CLK),
         .nrst(nrst),
-
-        .int_sig(int_sig),
+        `ifdef FEATURE_INTERRUPT_ENABLE
+		    .int_sig(int_sig),
+	    `endif 
         
         .ext_data_write(core_data_write),
         .ext_data_addr(core_data_addr),        
@@ -258,7 +260,11 @@ module tb_core_extmem();
         
         .ext_inst_addr(core_inst_addr),
         .ext_inst_data(core_inst_data),
-        .ext_if_inst(core_if_inst)
+
+        `ifdef FEATURE_INST_TRACE_ENABLE
+		.ext_if_inst(core_if_inst)
+		.ext_id_inst(core_id_inst)
+	    `endif
     );
     
     answerkey_i #() AK();

@@ -27,7 +27,9 @@ module core_extmem (
 	input nrst,
 
 	// Interrupt signals
-	input [`INT_SIG_WIDTH-1:0] int_sig,
+	`ifdef FEATURE_INTERRUPT_ENABLE
+		input [`INT_SIG_WIDTH-1:0] int_sig,
+	`endif 
 	
 	// Data Memory I/O
 	`ifdef FEATURE_BIT_ENABLE
@@ -42,18 +44,32 @@ module core_extmem (
 	output ext_data_req,
 	input ext_data_gnt,
 	input ext_data_valid,
-	
+
+	// Debug Outputs
+	`ifdef FEATURE_INST_TRACE_ENABLE
+		output [`WORD_WIDTH-1:0] ext_if_inst,
+		output [`WORD_WIDTH-1:0] ext_id_inst,
+	`endif
 	
 	// Instruction Memory I/O
 	output [`PC_ADDR_BITS-1:0] ext_inst_addr,
-	input [`WORD_WIDTH-1:0] ext_inst_data,
-	
-	// Debug Outputs
-	output [`WORD_WIDTH-1:0] ext_if_inst,
-	output [`WORD_WIDTH-1:0] ext_id_inst
+	input [`WORD_WIDTH-1:0] ext_inst_data
 );
 
-assign ext_data_wr_en = |ext_data_write;
+	`ifdef FEATURE_INTERRUPT_ENABLE
+		// do nothing
+	`else
+		wire [`INT_SIG_WIDTH-1:0] int_sig = `INT_SIG_WIDTH'd0;
+	`endif 
+
+	`ifdef FEATURE_INST_TRACE_ENABLE
+		// do nothing
+	`else
+		wire [`WORD_WIDTH-1:0] ext_if_inst;
+		wire [`WORD_WIDTH-1:0] ext_id_inst;
+	`endif
+
+	assign ext_data_wr_en = |ext_data_write;
 	
 /******************************** DECLARING WIRES *******************************/
 

@@ -19,9 +19,11 @@ module tb_core_extmem_single();
 
 	reg [`WORD_WIDTH-1:0] last_inst;
 	
-    localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/I-LB-01.mem");
-    localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/I-LB-01.mem");
-    localparam string temp_refm = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/mem/I-LB-01.mem");
+    // localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/program_inst.hex");
+    localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/I-SB-01.mem");
+    // localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/program_data.hex");
+    localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/I-SB-01.mem");
+    localparam string temp_refm = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/mem/I-SB-01.mem");
 
 	wire [3:0] dmem_data_write;
 	`ifdef FEATURE_BIT_ENABLE
@@ -55,14 +57,15 @@ module tb_core_extmem_single();
     
     wire [`PC_ADDR_BITS-1:0] core_inst_addr;
     wire [`WORD_WIDTH-1:0] core_inst_data;
-	wire [`WORD_WIDTH-1:0] core_if_inst;
+    wire [`WORD_WIDTH-1:0] core_if_inst;
+    wire [`WORD_WIDTH-1:0] core_id_inst;
     
     datamem DATAMEM (
         .clk(CLK),
         .nrst(nrst),
 
         .dm_write(dmem_data_write),
-        .data_addr(bus_data_addr),        
+        .data_addr(core_data_addr),        
         .data_in(core_data_store),
         .data_req(core_data_request),
         .data_gnt(core_data_grant),
@@ -89,8 +92,9 @@ module tb_core_extmem_single();
     core_extmem CORE(
         .clk(CLK),
         .nrst(nrst),
-
-        .int_sig(int_sig),
+        `ifdef FEATURE_INTERRUPT_ENABLE
+		    .int_sig(int_sig),
+	    `endif 
         
         .ext_data_write(core_data_write),
         .ext_data_addr(core_data_addr),        
@@ -102,8 +106,11 @@ module tb_core_extmem_single();
         
         .ext_inst_addr(core_inst_addr),
         .ext_inst_data(core_inst_data),
-		.ext_if_inst(core_if_inst),
+
+        `ifdef FEATURE_INST_TRACE_ENABLE
+		.ext_if_inst(core_if_inst)
 		.ext_id_inst(core_id_inst)
+	    `endif
     );
     
     wire [31:0] box;
