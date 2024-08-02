@@ -111,7 +111,6 @@ module core_extmem (
 	wire [`REGFILE_BITS-1:0] id_rsA; 		// source register B
 	wire [`REGFILE_BITS-1:0] id_rsB;		// source register A
 	wire [`REGFILE_BITS-1:0] id_rd;			// destination register
-	assign id_opcode = id_inst[6:0];
 	assign id_funct3 = id_inst[14:12];
 	assign id_funct7 = id_inst[31:25];
 
@@ -370,6 +369,7 @@ module core_extmem (
 	wire id_c_is_jump;
 	wire id_c_is_btype;
 	wire id_c_is_nop;
+	wire [5:0] id_c_opcode;
 
 	// registers and immediates
     wire [`REGFILE_BITS-1:0] id_c_rsA;
@@ -787,6 +787,7 @@ module core_extmem (
 		.is_jump(id_c_is_jump),
 		.is_btype(id_c_is_btype),
 		.is_nop(id_c_is_nop),
+		.base_opcode(id_c_opcode),
         
         // Results (output)
         .rs1(id_c_rsA),
@@ -815,6 +816,7 @@ module core_extmem (
 	assign id_is_btype = id_is_comp ? id_c_is_btype : id_base_is_btype;
 	assign id_imm_select = id_is_comp ? id_c_imm_select : id_base_imm_select;
 	assign id_is_nop = id_is_comp ? id_c_is_nop : (id_inst == 32'h13);
+	assign id_opcode = id_is_comp ? id_c_opcode : id_inst[6:0];
 	// ================================================================================
     
 	pipereg_id_exe ID_EXE(

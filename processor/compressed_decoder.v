@@ -58,6 +58,7 @@ module compressed_decoder(
     output reg is_nop,                              // Used to check if an instruction is C.NOP.
 
     // results
+    output reg [5:0] base_opcode,
     output [4:0] rs1,                               // Register A
     output [4:0] rs2,                               // Register B
     output [4:0] rd,                                // Destination Register
@@ -353,6 +354,28 @@ module compressed_decoder(
             // default values only
             
         endcase
+    end
+    
+    // base opcode selection
+    always@(*) begin
+        if (r_type)
+            base_opcode = `OPC_RTYPE;
+        else if (i_type)
+            base_opcode = `OPC_ITYPE;
+        else if (load_inst)
+            base_opcode = `OPC_LOAD;
+        else if (store_inst)
+            base_opcode = `OPC_STYPE;
+        else if (b_type)
+            base_opcode = `OPC_BTYPE;
+        else if (j_type)
+            base_opcode = `OPC_JAL;
+        else if (jr_type)
+            base_opcode = `OPC_JALR;
+        else if (ebreak_type)
+            base_opcode = `OPC_URET;
+        else
+            base_opcode = 6'd0;
     end
 
     // control signals
