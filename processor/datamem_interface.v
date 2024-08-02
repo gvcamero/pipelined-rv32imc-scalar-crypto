@@ -10,7 +10,12 @@ module datamem_interface(
         // Pass-through to Datamem
         input [`DATAMEM_BITS-1:0] exe_addr_in,
         input [`DATAMEM_BITS-1:0] mem_addr_in,
-        output [`BUS_BITS-1:0] addr_out,        
+        `ifdef FEATURE_DMEM_BYTE_ADDRESS
+            output [`BUS_BITS-1:0] addr_out,
+        `else
+            output [`DATAMEM_BITS-1:0] addr_out,
+        `endif 
+                
         // Store Block I/O
         input [31:0] sb_opB,
         input [1:0] sb_byte_offset,
@@ -36,7 +41,6 @@ module datamem_interface(
         
         // Core Control I/O
         input [`REGFILE_BITS-1:0] mem_rd,
-        input stall,
         output store_sel,
         output read_ready
     ); 
@@ -44,7 +48,11 @@ module datamem_interface(
     wire [31:0] lb_data_t;
     wire [31:0] sb_data_t;
     wire [`DATAMEM_BITS-1:0] addr_out_t;
-    assign addr_out = {addr_out_t, 2'b0}; 
+    `ifdef FEATURE_DMEM_BYTE_ADDRESS
+        assign addr_out = {addr_out_t, 2'b0};
+    `else
+        assign addr_out = addr_out_t;
+    `endif 
     `ifdef FEATURE_BIT_ENABLE
         wire [31:0] sb_dm_write_t;
     `else
@@ -52,7 +60,7 @@ module datamem_interface(
     `endif
     
     wire is_load = (sel_data == 3'd3) && (mem_rd != 0);
-    wire is_mem_op = sb_is_stype || is_load;
+    wire is_mem_op = (sb_is_stype || is_load) && ~mem_flush;
     wire [`DATAMEM_BITS-1:0] addr_in = (is_load || store_sel) ? mem_addr_in : exe_addr_in;
     /*
     reg hold;

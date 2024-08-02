@@ -37,7 +37,12 @@ module core_extmem (
 	`else
 		output [3:0] ext_data_write,
 	`endif
-	output [`BUS_BITS-1:0] ext_data_addr,	
+	`ifdef FEATURE_DMEM_BYTE_ADDRESS
+        output [`BUS_BITS-1:0] ext_data_addr,	
+    `else
+        output [`DATAMEM_BITS-1:0] ext_data_addr,	
+    `endif 
+	
 	output ext_data_wr_en,
 	output [`DATAMEM_WIDTH-1:0] ext_data_store,	
 	input [`DATAMEM_WIDTH-1:0] ext_data_load,

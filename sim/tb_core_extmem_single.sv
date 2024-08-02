@@ -20,10 +20,10 @@ module tb_core_extmem_single();
 	reg [`WORD_WIDTH-1:0] last_inst;
 	
     // localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/program_inst.hex");
-    localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/I-SB-01.mem");
+    localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/I-ADD-01.mem");
     // localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/program_data.hex");
-    localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/I-SB-01.mem");
-    localparam string temp_refm = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/mem/I-SB-01.mem");
+    localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/I-ADD-01.mem");
+    localparam string temp_refm = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/mem/I-ADD-01.mem");
 
 	wire [3:0] dmem_data_write;
 	`ifdef FEATURE_BIT_ENABLE
@@ -35,7 +35,7 @@ module tb_core_extmem_single();
 	`endif
 
     wire [`DATAMEM_BITS-1:0] core_data_addr;	
-    wire [`BUS_BITS-1:0] bus_data_addr = {2'b0, core_data_addr};	
+    wire [`BUS_BITS-1:0] bus_data_addr = {core_data_addr, 2'b0};	
     wire [`DATAMEM_WIDTH-1:0] core_data_store;	
     wire [`DATAMEM_WIDTH-1:0] core_data_load;
     wire core_data_request;
@@ -54,6 +54,7 @@ module tb_core_extmem_single();
     wire core_data_request;
     wire core_data_grant;
     wire core_data_valid;
+    wire active_data_op = core_data_request || core_data_valid || core_data_grant;
     
     wire [`PC_ADDR_BITS-1:0] core_inst_addr;
     wire [`WORD_WIDTH-1:0] core_inst_data;
@@ -65,7 +66,12 @@ module tb_core_extmem_single();
         .nrst(nrst),
 
         .dm_write(dmem_data_write),
-        .data_addr(core_data_addr),        
+        `ifdef FEATURE_DMEM_BYTE_ADDRESS
+		      .data_addr(core_data_addr)
+		`else 
+		      .data_addr(bus_data_addr),      
+	    `endif
+          
         .data_in(core_data_store),
         .data_req(core_data_request),
         .data_gnt(core_data_grant),
@@ -97,20 +103,21 @@ module tb_core_extmem_single();
 	    `endif 
         
         .ext_data_write(core_data_write),
+        
         .ext_data_addr(core_data_addr),        
         .ext_data_store(core_data_store),
         .ext_data_load(core_data_load),
         .ext_data_req(core_data_request),
         .ext_data_gnt(core_data_grant),
         .ext_data_valid(core_data_valid),
-        
-        .ext_inst_addr(core_inst_addr),
-        .ext_inst_data(core_inst_data),
 
         `ifdef FEATURE_INST_TRACE_ENABLE
-		.ext_if_inst(core_if_inst)
-		.ext_id_inst(core_id_inst)
+		.ext_if_inst(core_if_inst),
+		.ext_id_inst(core_id_inst),
 	    `endif
+	    
+	    .ext_inst_addr(core_inst_addr),
+        .ext_inst_data(core_inst_data)
     );
     
     wire [31:0] box;
@@ -225,7 +232,13 @@ module tb_core_extmem_single();
 	        consecutive_nops = 0;
 	        last_inst = 0;
 	    end
-	    else
+	    else begin
+	       if (active_data_op) begin
+                last_inst <= INST;
+                consecutive_nops = 0;
+                check = 0;
+            end
+            else 
             if (!done)
                 if ((last_inst[15:0] == 16'h0001 || last_inst == 32'h13) && (INST[15:0] == 16'h0001 || INST == 32'h13)) begin
                     consecutive_nops = consecutive_nops + 1;
@@ -239,6 +252,7 @@ module tb_core_extmem_single();
                     consecutive_nops = 0;
                     check = 0;
                 end
+         end
 	end
 	// This controls the NOP counter
 	always@(posedge CLK) begin

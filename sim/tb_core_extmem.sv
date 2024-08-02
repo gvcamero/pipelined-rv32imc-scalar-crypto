@@ -202,12 +202,14 @@ module tb_core_extmem();
 		assign dmem_data_write = core_data_write;
 	`endif
     
-    wire [`BUS_BITS-1:0] core_data_addr;	
+    wire [`DATAMEM_BITS-1:0] core_data_addr;	
+    wire [`BUS_BITS-1:0] bus_data_addr = {core_data_addr, 2'b0};	
     wire [`DATAMEM_WIDTH-1:0] core_data_store;	
     wire [`DATAMEM_WIDTH-1:0] core_data_load;
     wire core_data_request;
     wire core_data_grant;
     wire core_data_valid;
+    wire active_data_op = core_data_request || core_data_valid || core_data_grant;
     
     wire [`PC_ADDR_BITS-1:0] core_inst_addr;
     wire [`WORD_WIDTH-1:0] core_inst_data;
@@ -219,7 +221,11 @@ module tb_core_extmem();
         .nrst(nrst),
 
         .dm_write(dmem_data_write),
-        .data_addr(core_data_addr),        
+        `ifdef FEATURE_DMEM_BYTE_ADDRESS
+		      .data_addr(core_data_addr)
+		`else 
+		      .data_addr(bus_data_addr),      
+	    `endif      
         .data_in(core_data_store),
         .data_req(core_data_request),
         .data_gnt(core_data_grant),
@@ -257,14 +263,14 @@ module tb_core_extmem();
         .ext_data_req(core_data_request),
         .ext_data_gnt(core_data_grant),
         .ext_data_valid(core_data_valid),
-        
-        .ext_inst_addr(core_inst_addr),
-        .ext_inst_data(core_inst_data),
 
         `ifdef FEATURE_INST_TRACE_ENABLE
-		.ext_if_inst(core_if_inst)
-		.ext_id_inst(core_id_inst)
+		.ext_if_inst(core_if_inst),
+		.ext_id_inst(core_id_inst),
 	    `endif
+	    
+	    .ext_inst_addr(core_inst_addr),
+        .ext_inst_data(core_inst_data)
     );
     
     answerkey_i #() AK();
@@ -301,7 +307,7 @@ module tb_core_extmem();
             last_inst = 0;
             con_write = 0;
             con_addr = 10'h0;
-            max_data_addr = 0;
+            max_data_addr = 248;
             con_in = 0;
             done = 0;
             check = 0;
@@ -322,6 +328,7 @@ module tb_core_extmem();
     // The following code is for checking the contents
     // of BLOCKMEM
     
+    /*
     always@(posedge CLK) begin
         if(!nrst)
             max_data_addr <= 0;
@@ -336,6 +343,7 @@ module tb_core_extmem();
                 end
             end
     end
+    */
     
     always@(posedge done) begin
         
@@ -381,7 +389,12 @@ module tb_core_extmem();
         end
         else begin
             if (!done) begin
-                if ((last_inst[15:0] == 16'h0001 || last_inst== 32'h13) && (INST[15:0] == 16'h0001 || INST== 32'h13)) begin
+                if (active_data_op) begin
+                    last_inst <= INST;
+                    consecutive_nops = 0;
+                    check = 0;
+                end
+                else if ((last_inst[15:0] == 16'h0001 || last_inst== 32'h13) && (INST[15:0] == 16'h0001 || INST== 32'h13)) begin
                     consecutive_nops = consecutive_nops + 1;
                     check = check + 1;
                 end
