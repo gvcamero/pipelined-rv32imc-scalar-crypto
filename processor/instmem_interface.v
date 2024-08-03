@@ -30,7 +30,7 @@ module instmem_interface (
     reg align_reg;
     
     reg [`PC_ADDR_BITS-1:0] addr_next;
-    assign inst_addr = addr_next;
+    assign inst_addr = {2'b0, addr_next[`PC_ADDR_BITS-1:2]};
     
     reg in_branch;
     
@@ -67,6 +67,15 @@ module instmem_interface (
                         case ({branch, in_branch})
                             // regular instruction
                             2'b00: begin
+                                in_branch <= 0;
+                                comp_buffer <= inst_data[31:16];
+                                jump_buffer <= 16'd0;
+                                curr_addr <= if_pcnew;
+                                state <= 3'd0;
+                                filled <= (align ^ inst_compressed);
+                            end
+                            // regular instruction after branch
+                            2'b01: begin
                                 in_branch <= 0;
                                 comp_buffer <= inst_data[31:16];
                                 jump_buffer <= 16'd0;
@@ -116,15 +125,6 @@ module instmem_interface (
                                         filled <= 1'b1; 
                                     end
                                 end
-                            end
-                            // in control flow instruction
-                            2'b01: begin
-                                comp_buffer <= inst_data[31:16];
-                                jump_buffer <= 16'd0;
-                                state <= 3'd0;
-                                curr_addr <= curr_addr + 32'd4;
-                                filled <= 1'b1;
-                                in_branch <= 0;
                             end
                             // control flow instruction into another control flow instruction
                             2'b11: begin

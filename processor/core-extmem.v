@@ -568,7 +568,7 @@ module core_extmem (
     
         .if_pc4(if_pc4),
         .if_pcnew(if_pcnew),
-        .id_stall(id_stall),
+        .id_stall(id_stall && ~id_flush),
         .branch(if_is_branch),
         
         .curr_addr(if_PC),

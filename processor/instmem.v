@@ -40,7 +40,7 @@ module instmem (
 	
 	integer i;
 	
-	assign prog = instmem[addr[`PC_ADDR_BITS-1:2]];
+	assign prog = instmem[addr];
 
     assign inst_be = prog; // sel_ISR? isr : prog;
     assign inst_t = {inst_be[7:0], inst_be[15:8], inst_be[23:16], inst_be[31:24]};
