@@ -56,7 +56,7 @@ module datamem_interface(
     `ifdef FEATURE_BIT_ENABLE
         wire [31:0] sb_dm_write_t;
     `else
-        wire [31:0] sb_dm_write_t
+        wire [31:0] sb_dm_write_t;
     `endif
     
     wire is_load = (sel_data == 3'd3) && (mem_rd != 0);
