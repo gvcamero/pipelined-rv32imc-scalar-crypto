@@ -564,16 +564,24 @@ module core_extmem (
 	instmem_interface IM_I (
         .clk(clk),
         .nrst(nrst),
+
+		.if_stall(if_stall),
         .if_flush(if_flush),
+		.id_stall(id_stall && ~id_flush),
+		.id_flush(id_flush),
     
-        .if_pc4(if_pc4),
+        .if_pc_out(if_PC),
+    	.id_pc_out(id_PC),
+		.if_pc4(if_pc4),
+		.id_pc4(id_pc4),
         .if_pcnew(if_pcnew),
-        .id_stall(id_stall && ~id_flush),
-        .branch(if_is_branch),
-        
-        .curr_addr(if_PC),
+
+        .branch(if_is_branch),		
+    	
+    	.if_inst(if_inst),
+		.id_inst(id_inst),
+
         .ready(if_ready),
-        .inst_out(if_inst),
         
         .inst_data(ext_inst_data),
         .inst_addr(ext_inst_addr)
@@ -647,6 +655,7 @@ module core_extmem (
 		end
 	end
 
+	/*
 	pipereg_if_id IF_ID(
 		.clk(id_clk),
 		.nrst(nrst),
@@ -658,7 +667,7 @@ module core_extmem (
 		.if_inst(if_inst), 	.id_inst(id_inst),
 		.if_PC(if_PC), 		.id_PC(id_PC)
 	);
-
+	*/
 
 
 // ID Stage ======================================================================

@@ -5,20 +5,38 @@
 module instmem_interface (
     input clk,
     input nrst,
-    input id_stall,
+
+    input if_stall,
     input if_flush,
+    input id_stall,
+    input id_flush,
     
     input [`PC_ADDR_BITS-1:0] if_pc4,
     input [`PC_ADDR_BITS-1:0] if_pcnew,
     input branch,
     
-    output reg [`PC_ADDR_BITS-1:0] curr_addr,
+    output reg [`PC_ADDR_BITS-1:0] if_pc_out,
+    output [`PC_ADDR_BITS-1:0] id_pc_out,
+    output [`PC_ADDR_BITS-1:0] id_pc4,
     output ready,
-    output [`WORD_WIDTH-1:0] inst_out,
+    output [`WORD_WIDTH-1:0] if_inst,
+    output [`WORD_WIDTH-1:0] id_inst,
     
     input [`WORD_WIDTH-1:0] inst_data,
 	output [`PC_ADDR_BITS-1:0] inst_addr
     );
+
+    pipereg_if_id IF_ID(
+		.clk(clk),
+		.nrst(nrst),
+
+		.flush(id_flush),
+		.stall(if_stall),
+
+		.if_pc4(if_pc4), 	.id_pc4(id_pc4),
+		.if_inst(if_inst), 	.id_inst(id_inst),
+		.if_PC(if_pc_out), 		.id_PC(id_pc_out)
+	);
     
     reg [2:0] state;
     reg filled;
@@ -26,7 +44,7 @@ module instmem_interface (
     reg [`WORD_WIDTH/2-1:0] comp_buffer;
     reg [`WORD_WIDTH/2-1:0] jump_buffer;
     wire align_branch = if_pcnew[1];
-    wire align = curr_addr[1];
+    wire align = if_pc_out[1];
     reg align_reg;
     
     reg [`PC_ADDR_BITS-1:0] addr_next;
@@ -36,8 +54,8 @@ module instmem_interface (
     
     reg ready_reg;
     assign ready = ready_reg;
-    reg [`WORD_WIDTH-1:0] inst_out_reg;
-    assign inst_out = inst_out_reg;
+    reg [`WORD_WIDTH-1:0] if_inst_reg;
+    assign if_inst = if_inst_reg;
     wire [15:0] inst_lo16 = align ? comp_buffer : inst_data[15:0];
     wire [15:0] inst_hi16 = align ? inst_data[15:0] : inst_data[31:16]; 
     wire inst_compressed = inst_lo16[1:0] != 2'd3;
@@ -47,7 +65,7 @@ module instmem_interface (
 	   if (!nrst) begin
 	       comp_buffer <= 16'd0;
 	       jump_buffer <= 16'd0;
-           curr_addr <= 32'd0;
+           if_pc_out <= 32'd0;
            state <= 3'd0;
            filled <= 1'b0;
            in_branch <= 0;
@@ -56,7 +74,7 @@ module instmem_interface (
             if (id_stall) begin
                 comp_buffer <= comp_buffer;
                 jump_buffer <= jump_buffer;
-                curr_addr <= curr_addr;
+                if_pc_out <= if_pc_out;
                 filled <= filled;   
                 in_branch <= in_branch;
             end
@@ -70,7 +88,7 @@ module instmem_interface (
                                 in_branch <= 0;
                                 comp_buffer <= inst_data[31:16];
                                 jump_buffer <= 16'd0;
-                                curr_addr <= if_pcnew;
+                                if_pc_out <= if_pcnew;
                                 state <= 3'd0;
                                 filled <= (align ^ inst_compressed);
                             end
@@ -79,7 +97,7 @@ module instmem_interface (
                                 in_branch <= 0;
                                 comp_buffer <= inst_data[31:16];
                                 jump_buffer <= 16'd0;
-                                curr_addr <= if_pcnew;
+                                if_pc_out <= if_pcnew;
                                 state <= 3'd0;
                                 filled <= (align ^ inst_compressed);
                             end
@@ -92,14 +110,14 @@ module instmem_interface (
                                     if (misalign_in_compressed) begin
                                         // 16-bit instruction
                                         // affected by jump_flush --> resolve on next cycle
-                                        curr_addr <= if_pcnew;
+                                        if_pc_out <= if_pcnew;
                                         in_branch <= 0;
                                         comp_buffer <= inst_data[31:16];
                                         jump_buffer <= 16'd0;
                                         filled <= 1'b1; 
                                     end
                                     else begin
-                                        curr_addr <= if_pcnew;
+                                        if_pc_out <= if_pcnew;
                                         in_branch <= 1;
                                         comp_buffer <= inst_data[31:16];
                                         jump_buffer <= inst_data[15:0];  
@@ -110,7 +128,7 @@ module instmem_interface (
                                     // check lowest two bits instead
                                     if (inst_data[1:0] == 2'd3) begin
                                         // word-aligned 32-bit instruction
-                                        curr_addr <= if_pcnew;
+                                        if_pc_out <= if_pcnew;
                                         in_branch <= 0;
                                         comp_buffer <= 16'd0;
                                         jump_buffer <= 16'd0;
@@ -118,7 +136,7 @@ module instmem_interface (
                                     end
                                     else begin
                                         // word-aligned 16-bit instruction 
-                                        curr_addr <= if_pcnew;
+                                        if_pc_out <= if_pcnew;
                                         in_branch <= 0;
                                         comp_buffer <= inst_data[31:16];
                                         jump_buffer <= 16'd0;
@@ -135,14 +153,14 @@ module instmem_interface (
                                     if (misalign_in_compressed) begin
                                         // 16-bit instruction
                                         // affected by jump_flush --> resolve on next cycle
-                                        curr_addr <= if_pcnew;
+                                        if_pc_out <= if_pcnew;
                                         in_branch <= 0;
                                         comp_buffer <= inst_data[31:16];
                                         jump_buffer <= 16'd0;
                                         filled <= 1'b1; 
                                     end
                                     else begin
-                                        curr_addr <= if_pcnew;
+                                        if_pc_out <= if_pcnew;
                                         in_branch <= 1;
                                         comp_buffer <= inst_data[31:16];
                                         jump_buffer <= inst_data[15:0];  
@@ -153,7 +171,7 @@ module instmem_interface (
                                     // check lowest two bits instead
                                     if (inst_data[1:0] == 2'd3) begin
                                         // word-aligned 32-bit instruction
-                                        curr_addr <= if_pcnew;
+                                        if_pc_out <= if_pcnew;
                                         in_branch <= 0;
                                         comp_buffer <= 16'd0;
                                         jump_buffer <= 16'd0;
@@ -161,7 +179,7 @@ module instmem_interface (
                                     end
                                     else begin
                                         // word-aligned 16-bit instruction 
-                                        curr_addr <= if_pcnew;
+                                        if_pc_out <= if_pcnew;
                                         in_branch <= 0;
                                         comp_buffer <= inst_data[31:16];
                                         jump_buffer <= 16'd0;
@@ -175,7 +193,7 @@ module instmem_interface (
                     default: begin
                         comp_buffer <= 16'd0;
                         jump_buffer <= 16'd0;
-                        curr_addr <= 32'd0;
+                        if_pc_out <= 32'd0;
                         state <= 3'd0;
                         filled <= 1'b0;
                         in_branch <= 0;
@@ -189,7 +207,7 @@ module instmem_interface (
     always@(*) begin
         if (branch) begin
             addr_next = if_pcnew;
-            inst_out_reg = inst_data;
+            if_inst_reg = inst_data;
             // entering control flow instruction
             if (align_branch && !misalign_in_compressed) begin
                 // misaligned word fetch needed
@@ -201,30 +219,30 @@ module instmem_interface (
             end      
         end
         else if (in_branch) begin
-            addr_next = curr_addr + 32'd4;
+            addr_next = if_pc_out + 32'd4;
             ready_reg = 1;
-            inst_out_reg = {inst_hi16, inst_lo16};
+            if_inst_reg = {inst_hi16, inst_lo16};
         end
         
         else begin
             // regular instruction
             if (!align || inst_compressed) begin
                 // word-aligned instruction
-                addr_next = curr_addr;
+                addr_next = if_pc_out;
                 ready_reg = 1;
             end
             else begin
                 // non-word-aligned instruction
                 if (filled) begin
-                    addr_next = curr_addr + 32'd4;
+                    addr_next = if_pc_out + 32'd4;
                     ready_reg = 1;
                 end
                 else begin
-                    addr_next = curr_addr;
+                    addr_next = if_pc_out;
                     ready_reg = 0;
                 end 
             end
-            inst_out_reg = {inst_hi16, inst_lo16};
+            if_inst_reg = {inst_hi16, inst_lo16};
          end
      end
 endmodule
