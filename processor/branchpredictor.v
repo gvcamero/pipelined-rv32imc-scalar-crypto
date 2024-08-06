@@ -248,7 +248,7 @@ module branchpredictor(
 	// we check if the branch target stored in the table is the same as the 
 	// computed branch target. If not, we update the table & flush the next 2 cycles.
 	// For exe_CNI: check if branch instruction is compressed to determine if next instruction is at next halfword
-	assign exe_PBT = (exe_sel_opBR || ~is_pred_correct)? exe_branchtarget : exe_loadentry[`BHT_PC_ADDR_BITS+1:2];
+	assign exe_PBT = (exe_sel_opBR)? exe_branchtarget : exe_loadentry[`BHT_PC_ADDR_BITS+1:2];
 	assign exe_CNI = {exe_loadentry[`BHT_CNI_TAG_FIELD], exe_set} + ((|exe_c_btype)? 2'd1 : 2'd2);
 	
 	// is_pred_correct: determines if the prediction is correct
