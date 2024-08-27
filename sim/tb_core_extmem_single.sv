@@ -47,19 +47,7 @@ module tb_core_extmem_single();
 	wire [`WORD_WIDTH-1:0] core_if_inst;
 	wire [`WORD_WIDTH-1:0] core_id_inst;
     
-    wire [3:0] core_data_write;
-    wire [`BUS_BITS-1:0] core_data_addr;	
-    wire [`DATAMEM_WIDTH-1:0] core_data_store;	
-    wire [`DATAMEM_WIDTH-1:0] core_data_load;
-    wire core_data_request;
-    wire core_data_grant;
-    wire core_data_valid;
     wire active_data_op = core_data_request || core_data_valid || core_data_grant;
-    
-    wire [`PC_ADDR_BITS-1:0] core_inst_addr;
-    wire [`WORD_WIDTH-1:0] core_inst_data;
-    wire [`WORD_WIDTH-1:0] core_if_inst;
-    wire [`WORD_WIDTH-1:0] core_id_inst;
     
     datamem DATAMEM (
         .clk(CLK),
@@ -246,6 +234,9 @@ module tb_core_extmem_single();
                 end
                 else if (INST == last_inst) begin
                     check = check + 1;
+                end
+                else if (last_inst == 32'h0) begin
+                    check = check;
                 end
                 else begin
                     last_inst <= INST;

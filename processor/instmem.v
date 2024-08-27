@@ -44,12 +44,12 @@ module instmem (
 
     assign inst_be = prog; // sel_ISR? isr : prog;
     assign inst_t = {inst_be[7:0], inst_be[15:8], inst_be[23:16], inst_be[31:24]};
-    assign inst = inst_t;
+    assign inst = inst_reg;
     
     always@(posedge clk) begin
         if (!nrst)
             inst_reg <= 32'd0;
         else
-            inst_reg <= inst_t;
+            inst_reg <= inst_be;
     end
 endmodule

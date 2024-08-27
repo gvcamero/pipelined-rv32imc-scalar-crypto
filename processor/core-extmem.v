@@ -561,7 +561,7 @@ module core_extmem (
 
 // IF Stage ======================================================================
     
-	instmem_interface IM_I (
+	instmem_interface_slow IM_I (
         .clk(clk),
         .nrst(nrst),
 
