@@ -147,10 +147,13 @@ module instmem_interface_slow (
                         end
                     end
                     IM_START_F: begin               // filled buffer start
-                        // compressed inst in buffer handled by IM_READY_U_A_2
-                        issue_addr <= issue_addr + `PC_ADDR_BITS'h4;       // skip ahead to next word
+                        if (comp_comp)
+                            state <= IM_READY_F_2;
+                        else begin
+                            state <= IM_READY_F_1;    
+                            issue_addr <= issue_addr + `PC_ADDR_BITS'h4;       // skip ahead to next word
+                        end
                         pc_track <= pc_track;
-                        state <= IM_READY_F_1;
                         ready_reg <= 1;
                         inst_buffer <= inst_t;
                         comp_buffer <= comp_buffer;
@@ -200,7 +203,7 @@ module instmem_interface_slow (
     always@(*) begin
         case(state)
             IM_READY_U_A_1:
-                if_inst_t = inst_buffer;
+                if_inst_t = inst_comp ? {16'h0, inst_buffer[15:0]} : inst_buffer;
             IM_READY_U_A_2:
                 if_inst_t = {16'h0, comp_buffer};
             IM_READY_F_1:

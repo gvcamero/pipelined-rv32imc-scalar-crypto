@@ -251,7 +251,7 @@ module sf_controller(
     */
     
     // Stalls/Enables
-    assign if_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready) || ~if_ready) || mem_hold;
+    assign if_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold;
     assign id_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold;
     assign exe_stall = (load_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold;
     assign mem_stall = ((load_hazard || dmem_stall) && ~dmem_ready) || mem_hold;					
