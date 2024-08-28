@@ -576,7 +576,8 @@ module core_extmem (
 		.id_pc4(id_pc4),
         .if_pcnew(if_pcnew),
 
-        .branch(if_is_branch),		
+        .enter_branch(if_is_branch),
+        .enter_interrupt(1'b0),		
     	
     	.if_inst(if_inst),
 		.id_inst(id_inst),

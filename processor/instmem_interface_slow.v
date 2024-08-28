@@ -13,7 +13,8 @@ module instmem_interface_slow (
     
     input [`PC_ADDR_BITS-1:0] if_pc4,
     input [`PC_ADDR_BITS-1:0] if_pcnew,
-    input branch,
+    input enter_branch,
+    input enter_interrupt,
     
     output [`PC_ADDR_BITS-1:0] if_pc_out,
     output [`PC_ADDR_BITS-1:0] id_pc_out,
@@ -47,6 +48,7 @@ module instmem_interface_slow (
     reg [`PC_ADDR_BITS-1:0] issue_addr;
     reg [`PC_ADDR_BITS-1:0] pc_track;
     reg [3:0] state;
+    reg in_branch;
     reg ready_reg;
 
     wire inst_comp = ~&inst_buffer[1:0];
@@ -62,8 +64,8 @@ module instmem_interface_slow (
     localparam IM_READY_F_2 = 4'h5;
 
     localparam IM_START_U_M = 4'h6;
-    localparam IM_CHECK_U_M = 4'h7;
-    localparam IM_RECHECK_U_M = 4'h8;
+    localparam IM_CHECK_F_M = 4'h7;
+    localparam IM_RECHECK_F_M = 4'h8;
     localparam IM_READY_U_M = 4'h9;
 
     reg [`WORD_WIDTH-1:0] if_inst_t;
@@ -81,16 +83,19 @@ module instmem_interface_slow (
             pc_track <= 0;
             state <= 4'h0;
             ready_reg <= 0;
+            in_branch <= 0;
         end
         else begin
-            if (branch) begin
+            if ((enter_branch && !in_branch) || enter_interrupt) begin
                 // reset
                 comp_buffer <= 0;
                 inst_buffer <= 0;
-                issue_addr <= if_pcnew;
+                issue_addr <= {if_pcnew[`PC_ADDR_BITS-1:2], 2'b0};
                 pc_track <= if_pcnew;
-                state <= 4'h0;
+                state <= IM_RESET;
                 ready_reg <= 0;
+                if (!enter_interrupt)
+                    in_branch <= 1;
             end
             else begin
                 case(state)
@@ -100,9 +105,9 @@ module instmem_interface_slow (
                         issue_addr <= issue_addr;
                         pc_track <= pc_track;
                         if (pc_track[1])            // misaligned start for branches
-                            state <= 4'hA;
+                            state <= IM_START_U_M;
                         else
-                            state <= 4'h1;
+                            state <= IM_START_U_A;
                         ready_reg <= 0;
                     end
                     IM_START_U_A: begin             // aligned unfilled buffer start
@@ -114,6 +119,7 @@ module instmem_interface_slow (
                         comp_buffer <= inst_t[31:16];
                     end
                     IM_READY_U_A_1: begin             // aligned unfilled buffer check/ready
+                        in_branch <= 0;
                         if (id_stall) begin
                             state <= IM_READY_U_A_1;
                         end
@@ -159,6 +165,7 @@ module instmem_interface_slow (
                         comp_buffer <= comp_buffer;
                     end
                     IM_READY_F_1: begin
+                        in_branch <= 0;
                         if (id_stall) begin
                             state <= IM_READY_F_1;
                         end
@@ -177,6 +184,7 @@ module instmem_interface_slow (
                         end
                     end
                     IM_READY_F_2: begin
+                        in_branch <= 0;
                         if (id_stall) begin
                             state <= IM_READY_F_2;
                         end
@@ -184,6 +192,36 @@ module instmem_interface_slow (
                             ready_reg <= 0;
                             pc_track <= pc_track + `PC_ADDR_BITS'h2;
                             state <= IM_START_U_A;
+                        end
+                    end
+                    IM_START_U_M: begin
+                        issue_addr <= issue_addr + `PC_ADDR_BITS'h4;       // skip ahead to next word
+                        comp_buffer <= inst_t[31:16];
+                        state <= IM_CHECK_F_M;
+                        /*
+                        if (inst_comp) begin
+                            // treat as compressed filled buffer case
+                            ready_reg <= 1;
+                            state <= IM_READY_F_2; 
+                        end
+                        else begin
+                            // need to fetch next word
+                            ready_reg <= 0;
+                            state <= IM_START_F;
+                        end
+                        */
+                    end
+                    IM_CHECK_F_M: begin
+                        inst_buffer <= inst_t;
+                        if (comp_comp) begin
+                            // treat as compressed filled buffer case
+                            ready_reg <= 1;
+                            state <= IM_READY_F_2; 
+                        end
+                        else begin
+                            // need to fetch next word
+                            ready_reg <= 0;
+                            state <= IM_START_F;
                         end
                     end
                     default: begin
