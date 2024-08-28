@@ -20,10 +20,10 @@ module tb_core_extmem_single();
 	reg [`WORD_WIDTH-1:0] last_inst;
 	
     // localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/program_inst.hex");
-    localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/I-ADD-01.mem");
+    localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/I-BNE-01.mem");
     // localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/program_data.hex");
-    localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/I-ADD-01.mem");
-    localparam string temp_refm = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/mem/I-ADD-01.mem");
+    localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/I-BNE-01.mem");
+    localparam string temp_refm = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/mem/I-BNE-01.mem");
 
 	wire [3:0] dmem_data_write;
 	`ifdef FEATURE_BIT_ENABLE
@@ -55,7 +55,7 @@ module tb_core_extmem_single();
 
         .dm_write(dmem_data_write),
         `ifdef FEATURE_DMEM_BYTE_ADDRESS
-		      .data_addr(core_data_addr)
+		      .data_addr(core_data_addr),
 		`else 
 		      .data_addr(bus_data_addr),      
 	    `endif
@@ -79,7 +79,7 @@ module tb_core_extmem_single();
         .nrst(nrst),
         .sel_ISR(1'b0),
 
-        .addr(core_inst_addr),
+        .addr({1'b0, core_inst_addr}),
         .inst(core_inst_data)
     );
     
@@ -218,7 +218,7 @@ module tb_core_extmem_single();
 	    if (!nrst) begin
 	        check = 0;
 	        consecutive_nops = 0;
-	        last_inst = 0;
+	        last_inst <= 0;
 	    end
 	    else begin
 	       if (active_data_op) begin
@@ -226,8 +226,7 @@ module tb_core_extmem_single();
                 consecutive_nops = 0;
                 check = 0;
             end
-            else 
-            if (!done)
+            else if (!done) begin
                 if ((last_inst[15:0] == 16'h0001 || last_inst == 32'h13) && (INST[15:0] == 16'h0001 || INST == 32'h13)) begin
                     consecutive_nops = consecutive_nops + 1;
                     check = check + 1;
@@ -235,7 +234,7 @@ module tb_core_extmem_single();
                 else if (INST == last_inst) begin
                     check = check + 1;
                 end
-                else if (last_inst == 32'h0) begin
+                else if (INST == 32'h0) begin
                     check = check;
                 end
                 else begin
@@ -243,6 +242,7 @@ module tb_core_extmem_single();
                     consecutive_nops = 0;
                     check = 0;
                 end
+             end
          end
 	end
 	// This controls the NOP counter

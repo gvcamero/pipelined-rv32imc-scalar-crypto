@@ -222,9 +222,9 @@ module tb_core_extmem();
 
         .dm_write(dmem_data_write),
         `ifdef FEATURE_DMEM_BYTE_ADDRESS
-		      .data_addr(core_data_addr)
+		      .data_addr({1'b0, core_data_addr})
 		`else 
-		      .data_addr(bus_data_addr),      
+		      .data_addr({1'b0, bus_data_addr}),      
 	    `endif      
         .data_in(core_data_store),
         .data_req(core_data_request),
@@ -232,7 +232,7 @@ module tb_core_extmem();
         .data_valid(core_data_valid),
 
         .con_write(con_write),
-        .con_addr(con_addr),
+        .con_addr({1'b0, con_addr}),
         .con_in(con_in),
         .con_en(1'b1),
 
@@ -245,7 +245,7 @@ module tb_core_extmem();
         .nrst(nrst),
         .sel_ISR(1'b0),
 
-        .addr(core_inst_addr),
+        .addr({1'b0, core_inst_addr}),
         .inst(core_inst_data)
     );
     
@@ -382,34 +382,36 @@ module tb_core_extmem();
     end 
     
     always@(posedge CLK) begin
-        if (!nrst) begin
-            check = 0;
-            consecutive_nops = 0;
-            last_inst = 0;
-        end
-        else begin
-            if (!done) begin
-                if (active_data_op) begin
-                    last_inst <= INST;
-                    consecutive_nops = 0;
-                    check = 0;
-                end
-                else if ((last_inst[15:0] == 16'h0001 || last_inst== 32'h13) && (INST[15:0] == 16'h0001 || INST== 32'h13)) begin
+	    if (!nrst) begin
+	        check = 0;
+	        consecutive_nops = 0;
+	        last_inst <= 0;
+	    end
+	    else begin
+	       if (active_data_op) begin
+                last_inst <= INST;
+                consecutive_nops = 0;
+                check = 0;
+            end
+            else if (!done) begin
+                if ((last_inst[15:0] == 16'h0001 || last_inst == 32'h13) && (INST[15:0] == 16'h0001 || INST == 32'h13)) begin
                     consecutive_nops = consecutive_nops + 1;
                     check = check + 1;
                 end
                 else if (INST == last_inst) begin
                     check = check + 1;
                 end
+                else if (INST == 32'h0) begin
+                    check = check;
+                end
                 else begin
                     last_inst <= INST;
                     consecutive_nops = 0;
                     check = 0;
                 end
-            end
-        end
+             end
+         end
     end
-    
     // This controls the NOP counter
 	always@(posedge CLK) begin
 	   if (!done)

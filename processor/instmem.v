@@ -32,24 +32,20 @@ module instmem (
 	
 	wire [`WORD_WIDTH-1:0] prog;
 	// wire [`WORD_WIDTH-1:0] isr;
-	wire [`WORD_WIDTH-1:0] inst_be;
 	wire [`WORD_WIDTH-1:0] inst_t;
 	reg [`WORD_WIDTH-1:0] inst_reg;
 
 	reg [`WORD_WIDTH-1:0] instmem [0:`MEM_DEPTH-1];
 	
-	integer i;
-	
 	assign prog = instmem[addr];
 
-    assign inst_be = prog; // sel_ISR? isr : prog;
-    assign inst_t = {inst_be[7:0], inst_be[15:8], inst_be[23:16], inst_be[31:24]};
+    assign inst_t = prog;
     assign inst = inst_reg;
     
     always@(posedge clk) begin
         if (!nrst)
             inst_reg <= 32'd0;
         else
-            inst_reg <= inst_be;
+            inst_reg <= inst_t;
     end
 endmodule
