@@ -20,6 +20,7 @@ module instmem_interface_slow (
     output [`PC_ADDR_BITS-1:0] id_pc_out,
     output [`PC_ADDR_BITS-1:0] id_pc4,
     output ready,
+    output trace_ready,
     output [`WORD_WIDTH-1:0] if_inst,
     output [`WORD_WIDTH-1:0] id_inst,
     
@@ -251,6 +252,22 @@ module instmem_interface_slow (
             default:
                 if_inst_t = 32'h0;
         endcase
+    end
+
+    reg ready_hold;
+    reg [3:0] last_state;
+    assign trace_ready = ready & ~(ready_hold & (last_state == state));
+
+    // debug ready signal for test environment
+    always@(posedge clk) begin
+        if (!nrst) begin
+            ready_hold <= 0;
+            last_state <= 4'h0;
+        end
+        else begin
+            ready_hold <= ready;
+            last_state <= state;
+        end
     end
 
 endmodule

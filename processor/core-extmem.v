@@ -54,6 +54,7 @@ module core_extmem (
 	`ifdef FEATURE_INST_TRACE_ENABLE
 		output [`WORD_WIDTH-1:0] ext_if_inst,
 		output [`WORD_WIDTH-1:0] ext_id_inst,
+		output ext_trace_ready,
 	`endif
 	
 	// Instruction Memory I/O
@@ -583,6 +584,7 @@ module core_extmem (
 		.id_inst(id_inst),
 
         .ready(if_ready),
+		.trace_ready(ext_trace_ready),
         
         .inst_data(ext_inst_data),
         .inst_addr(ext_inst_addr)
@@ -983,7 +985,11 @@ module core_extmem (
 
 // MEM Stage =====================================================================
     wire mem_dm_en;
-    wire [`BUS_BITS-1:0] mem_dm_addr;
+    `ifdef FEATURE_DMEM_BYTE_ADDRESS
+        wire [`BUS_BITS-1:0] mem_dm_addr;
+    `else
+        wire [`DATAMEM_BITS-1:0] mem_dm_addr;
+	`endif
 	wire mem_sel_store;
 	wire sb_is_stype;
     
