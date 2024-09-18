@@ -127,8 +127,14 @@ module mem_protocol_driver (
                         req <= 0;
                         addr_buffer <= 0;
                         // 1+ cycle delay
-                        load_buffer <= 0;
-                        mem_state <= MEM_GRANT_LOAD;
+                        if (valid) begin
+                            load_buffer <= read_in;
+                            mem_state <= MEM_VALID_LOAD;
+                        end
+                        else begin
+                            load_buffer <= 0;
+                            mem_state <= MEM_GRANT_LOAD;
+                        end
                     end
                     else begin
                         addr_buffer <= addr_buffer;
@@ -199,7 +205,12 @@ module mem_protocol_driver (
         else begin
             case(mem_state)
                 MEM_WAIT_LOAD: begin
-                    ready <= 0;
+                    if (valid) begin
+                        ready <= 1;
+                    end
+                    else begin
+                        ready <= 0;
+                    end
                 end
                 MEM_GRANT_LOAD: begin
                     if (valid) begin
