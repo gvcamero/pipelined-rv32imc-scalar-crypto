@@ -8,6 +8,7 @@
 module tb_core_extmem_single();
 	
 	reg CLK;
+	wire test_clk = CLK;
 	reg nrst;
 
 	reg [`INT_SIG_WIDTH-1:0] int_sig;
@@ -20,10 +21,10 @@ module tb_core_extmem_single();
 	reg [`WORD_WIDTH-1:0] last_inst;
 	
     // localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/program_inst.hex");
-    localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/I-BNE-01.mem");
+    localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/I-LW-01.mem");
     // localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/program_data.hex");
-    localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/I-BNE-01.mem");
-    localparam string temp_refm = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/mem/I-BNE-01.mem");
+    localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/I-LW-01.mem");
+    localparam string temp_refm = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/mem/I-LW-01.mem");
 
 	wire [3:0] dmem_data_write;
 	`ifdef FEATURE_BIT_ENABLE
@@ -75,7 +76,7 @@ module tb_core_extmem_single();
     );
     
     instmem INSTMEM (
-        .clk(CLK),
+        .clk(test_clk),
         .nrst(nrst),
         .sel_ISR(1'b0),
 
@@ -84,7 +85,7 @@ module tb_core_extmem_single();
     );
     
     core_extmem CORE(
-        .clk(CLK),
+        .clk(test_clk),
         .nrst(nrst),
         `ifdef FEATURE_INTERRUPT_ENABLE
 		    .int_sig(int_sig),

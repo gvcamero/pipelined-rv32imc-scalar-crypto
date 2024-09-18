@@ -153,6 +153,7 @@ module tb_core_extmem();
     };
 	
 	reg CLK;
+	wire testclk = ~CLK;
 	reg nrst;
 	wire [`INT_SIG_WIDTH-1:0] int_sig = 0;;
 
@@ -217,7 +218,7 @@ module tb_core_extmem();
     wire [`WORD_WIDTH-1:0] core_id_inst;
     
     datamem DATAMEM (
-        .clk(CLK),
+        .clk(testclk),
         .nrst(nrst),
 
         .dm_write(dmem_data_write),
@@ -241,7 +242,7 @@ module tb_core_extmem();
     );
     
     instmem INSTMEM (
-        .clk(CLK),
+        .clk(testclk),
         .nrst(nrst),
         .sel_ISR(1'b0),
 
@@ -353,7 +354,7 @@ module tb_core_extmem();
         $display("=======\t==========\t==========");	
     end
     
-    always@(negedge CLK) begin
+    always@(negedge testclk) begin
         if(done) begin	
             if(con_out == box) begin
                 //$display("0x%3X\t0x%X\t0x%X\tPass", con_addr, con_out, AK.memory[con_addr]);
