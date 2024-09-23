@@ -62,18 +62,7 @@ module datamem_interface(
     wire is_load = (sel_data == 3'd3) && (mem_rd != 0);
     wire is_mem_op = (sb_is_stype || is_load) && ~mem_flush;
     wire [`DATAMEM_BITS-1:0] addr_in = (is_load || store_sel) ? mem_addr_in : exe_addr_in;
-    /*
-    reg hold;
-    
-    always@(posedge clk) begin
-        if (!nrst)
-            hold <= 0;
-        else if (dm_stall)
-            hold <= 1;
-        else
-            hold <= 0;
-    end
-    */
+    wire [`WORD_WIDTH-1:0] local_in = (addr_out_t == `DATAMEM_BITS'h1FF0) ? num_cucles : read_in;
         
     storeblock STOREBLOCK(
 		.opB(sb_opB),
