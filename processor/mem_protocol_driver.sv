@@ -69,18 +69,16 @@ module mem_protocol_driver (
     assign write_out = write_buffer;
     assign wren_out = wren_buffer;
 
-    reg [`WORD_WIDTH-1:0] num_cycles;
+    
     
     always@(posedge clk) begin
         if(!nrst) begin
             delay_store <= 0;
             hold_state <= 0;
-            num_cycles <= `WORD_WIDTH'd0;
         end
         else begin
             delay_store <= ((mem_state == MEM_START) || op_type == OP_STORE) ? 0 : hold_state;
             hold_state <= (mem_state == MEM_START) ? issue_op : hold_state;
-            num_cycles <= num_cycles + `WORD_WIDTH'd1;
         end
     end
 
