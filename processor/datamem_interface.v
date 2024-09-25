@@ -58,20 +58,18 @@ module datamem_interface(
     `else
         wire [31:0] sb_dm_write_t;
     `endif
-
-    reg [`WORD_WIDTH-1:0] num_cycles;
     
     wire is_load = (sel_data == 3'd3) && (mem_rd != 0);
     wire is_mem_op = (sb_is_stype || is_load) && ~mem_flush;
     wire [`DATAMEM_BITS-1:0] addr_in = (is_load || store_sel) ? mem_addr_in : exe_addr_in;
     reg [`WORD_WIDTH-1:0] num_cycles;
     reg [`DATAMEM_BITS-1:0] last_addr_out;
-    wire [`WORD_WIDTH-1:0] local_in = (last_addr_out == `DATAMEM_BITS'h1FF0) ? num_cycles : lb_data_t;
+    wire [`WORD_WIDTH-1:0] local_in = (last_addr_out == 'h1FF0) ? num_cycles : lb_data_t;
 
     always@(posedge clk) begin
         if (!nrst) begin
             num_cycles <= `WORD_WIDTH'd0;
-            last_addr_out <= `DATAMEM_BITS'd0;
+            last_addr_out <= 'd0;
         end
         else begin
             num_cycles <= num_cycles + `WORD_WIDTH'd1;

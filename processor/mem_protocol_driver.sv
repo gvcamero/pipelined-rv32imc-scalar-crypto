@@ -127,6 +127,7 @@ module mem_protocol_driver (
                     if (gnt) begin
                         req <= 0;
                         addr_buffer <= 0;
+                        `ifdef FEATURE_NEGEDGE_ENABLE
                         // 1+ cycle delay
                         if (valid) begin
                             load_buffer <= read_in;
@@ -136,6 +137,10 @@ module mem_protocol_driver (
                             load_buffer <= 0;
                             mem_state <= MEM_GRANT_LOAD;
                         end
+                        `else
+                        load_buffer <= 0;
+                        mem_state <= MEM_GRANT_LOAD;
+                        `endif
                     end
                     else begin
                         addr_buffer <= addr_buffer;
@@ -206,12 +211,16 @@ module mem_protocol_driver (
         else begin
             case(mem_state)
                 MEM_WAIT_LOAD: begin
+                    `ifdef FEATURE_NEGEDGE_ENABLE
                     if (valid) begin
                         ready <= 1;
                     end
                     else begin
                         ready <= 0;
                     end
+                    `else
+                    ready <= 0;
+                    `endif
                 end
                 MEM_GRANT_LOAD: begin
                     if (valid) begin
