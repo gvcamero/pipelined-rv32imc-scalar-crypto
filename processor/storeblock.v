@@ -45,9 +45,11 @@ module storeblock(
     parameter sb = 2'd0;
     
     wire [31:0] nboff_data;
+    wire [31:0] nboff_data_shift;
     
     assign nboff_data = (store_select == sb) ? {24'd0 , opB[7:0]} : (store_select == sh) ? {16'd0, opB[15:0]} : opB ;
-    assign data = nboff_data << (8*byte_offset);
+    assign nboff_data_shift = nboff_data << (8*byte_offset);
+    assign data = {nboff_data_shift[7:0], nboff_data_shift[15:8], nboff_data_shift[23:16], nboff_data_shift[31:24]};
     
     // Original implementation was big-endian [b+3, b+2, b+1, b]
     // Changed to little-endian to accomodate RISC-V GNU Assembler Output [b, b+1, b+2, b+3]

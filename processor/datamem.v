@@ -175,7 +175,7 @@ module datamem (
 		      num_cycles_addr_reg <= (data_addr == 14'h2010);
 		end
 	end
-	assign data_out_t = coremem_douta;
+	assign data_out_t = {coremem_douta[7:0], coremem_douta[15:8], coremem_douta[23:16], coremem_douta[31:24]};
 
 	// Assigning con_out
 	reg protocol_sel_reg = 0;
