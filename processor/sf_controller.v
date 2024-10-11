@@ -251,16 +251,16 @@ module sf_controller(
     */
     
     // Stalls/Enables
-    assign if_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold;
-    assign id_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold;
-    assign exe_stall = (load_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold;
+    assign if_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold || ((exe_opcode == `OPC_STYPE) && dmem_stall && dmem_ready);
+    assign id_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold || ((exe_opcode == `OPC_STYPE) && dmem_stall && dmem_ready);
+    assign exe_stall = (load_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold || ((exe_opcode == `OPC_STYPE) && dmem_stall && dmem_ready);
     assign mem_stall = ((load_hazard || dmem_stall) && ~dmem_ready) || mem_hold;					
 
     // Flushes/Resets
     assign if_flush = ISR_PC_flush;
     assign id_flush = (ISR_pipe_flush || jump_flush || branch_flush) || (!if_ready && !id_stall);
     assign exe_flush = exe_jalr_hazard || branch_flush || (is_nop && ~mem_stall);
-    assign mem_flush = (div_running || mul_stall) || (load_hazard && dmem_ready) || ((exe_opcode == `OPC_STYPE) && ~dmem_stall && dmem_ready);	
+    assign mem_flush = (div_running || mul_stall) || (load_hazard && dmem_ready) || ((exe_opcode == `OPC_STYPE) && dmem_ready);	
     assign wb_flush = mem_stall;
 
     // Enables
