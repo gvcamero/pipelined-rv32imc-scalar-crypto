@@ -25,11 +25,11 @@ module instmem_interface_slow (
     output [`WORD_WIDTH-1:0] id_inst,
     
     input [`WORD_WIDTH-1:0] inst_data,
-	output [`PC_ADDR_BITS-1:0] inst_addr
+	output [`EXT_PC_ADDR_BITS-1:0] inst_addr
     );
 
     wire [`PC_ADDR_BITS-1:0] inst_addr_t;
-    assign inst_addr = {2'b0, inst_addr_t[`PC_ADDR_BITS-1:2]};
+    assign inst_addr = inst_addr_t[`PC_ADDR_BITS-1:2];
     wire [`WORD_WIDTH-1:0] inst_t = {inst_data[7:0], inst_data[15:8], inst_data[23:16], inst_data[31:24]};
 
     pipereg_if_id IF_ID(

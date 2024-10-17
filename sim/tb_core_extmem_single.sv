@@ -40,15 +40,15 @@ module tb_core_extmem_single();
     wire [`DATAMEM_WIDTH-1:0] core_data_store;	
     wire [`DATAMEM_WIDTH-1:0] core_data_load;
     wire core_data_request;
-    wire core_data_grant;
-    wire core_data_valid;
+    wire core_data_grant = 1'b1;
+    wire core_data_valid = 1'b1;
     
-    wire [`PC_ADDR_BITS-1:0] core_inst_addr;
+    wire [`EXT_PC_ADDR_BITS-1:0] core_inst_addr;
     wire [`WORD_WIDTH-1:0] core_inst_data;
 	wire [`WORD_WIDTH-1:0] core_if_inst;
 	wire [`WORD_WIDTH-1:0] core_id_inst;
     
-    wire active_data_op = core_data_request || core_data_valid || core_data_grant;
+    wire active_data_op = core_data_request;
     
     datamem DATAMEM (
         .clk(CLK),
@@ -63,8 +63,8 @@ module tb_core_extmem_single();
           
         .data_in(core_data_store),
         .data_req(core_data_request),
-        .data_gnt(core_data_grant),
-        .data_valid(core_data_valid),
+        .data_gnt(),
+        .data_valid(),
 
         .con_write(con_write),
         .con_addr(con_addr),

@@ -43,7 +43,8 @@
 `define MEM_WIDTH 32            
 `define WORD_WIDTH 32           // Word width of 32bits; Used for Instructions, operands, and immediates
 
-`define PC_ADDR_BITS 13         // External address width
+`define PC_ADDR_BITS 15         
+`define EXT_PC_ADDR_BITS 13     // External address width
 
 // If changing any of the parameters below, double check datamem.v, since some signals
 // there don't use parameters.
@@ -66,22 +67,22 @@
 `define BHT_SET_BITS `ceilLog2(`BHT_ENTRY/4)     // log2(16)=4
 `define BHT_TAG_BITS `BHT_PC_ADDR_BITS - `BHT_SET_BITS      // 9
 `define BHT_ENTRY_BITS 4 + `BHT_TAG_BITS + `BHT_PC_ADDR_BITS    // 4 = 2bits saturating counter + 1bit ISR_running + 1bit valid
-                                                // 4 + 8 + 12 = 24 bits
+                                                // 4 + 8 + 14 = 26 bits
 
 // For the following parameters, some values will have to be changed manually
-`define BHT_TAG_FIELD `BHT_ENTRY_BITS-2:14      // NOTE: please manually change the LSB when changing PC_ADDR_BITS
+`define BHT_TAG_FIELD `BHT_ENTRY_BITS-2:16      // NOTE: please manually change the LSB when changing PC_ADDR_BITS
                                                 // since Verilog does not allow the use of more than 1 parameter
                                                 // in defining a vector. The LSB should be equivalent to:
                                                 // `BHT_ENTRY_BITS-`BHT_TAG_BITS-2
-                                                // 24 - 8 - 2 = 14
+                                                // 26 - 8 - 2 = 16
 
 `define BHT_PC_TAG_FIELD `BHT_PC_ADDR_BITS-1:4  // Same with this, please change LSB when
                                                 // changing BHT size. LSB is equivalent to:
                                                 // `BHT_SET_BITS
 
-`define BHT_CNI_TAG_FIELD `BHT_ENTRY_BITS-3:14  // Please change LSB when changing PC_ADDR_BITS
+`define BHT_CNI_TAG_FIELD `BHT_ENTRY_BITS-3:16  // Please change LSB when changing PC_ADDR_BITS
                                                 // LSB = `BHT_ENTRY_BITS-`BHT_TAG_BITS-2
-                                                // 26 - 8 - 2 = 14
+                                                // 26 - 8 - 2 = 16
 
 // CONTROLLER CONSTANTS
 // Instruction opcodes; can be modified if implementing more extensions

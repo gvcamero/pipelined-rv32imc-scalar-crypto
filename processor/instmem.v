@@ -26,7 +26,7 @@ module instmem (
     input nrst,
 	input sel_ISR,
 
-	input [`PC_ADDR_BITS-1:0] addr,
+	input [`EXT_PC_ADDR_BITS-1:0] addr,
 	output [`WORD_WIDTH-1:0] inst
 );
 	

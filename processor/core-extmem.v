@@ -58,7 +58,7 @@ module core_extmem (
 	`endif
 	
 	// Instruction Memory I/O
-	output [`PC_ADDR_BITS-1:0] ext_inst_addr,
+	output [`EXT_PC_ADDR_BITS-1:0] ext_inst_addr,
 	input [`WORD_WIDTH-1:0] ext_inst_data
 );
 
