@@ -578,6 +578,7 @@ module core_extmem (
         .if_pcnew(if_pcnew),
 
         .enter_branch(if_is_branch),
+		.correction(exe_correction[1]),
         .enter_interrupt(1'b0),		
     	
     	.if_inst(if_inst),
@@ -624,43 +625,43 @@ module core_extmem (
 	// branches/jumps in the IF stage that are predicted to take the branch target won't get
 	// executed since they're supposed to be flushed anyway.
 	always@(*) begin
-		if (if_ready) begin
-			if(ret_ISR) begin
-				if_pcnew = save_PC;
-				if_is_branch = 1;
-			end
-			else if (eret_call) begin
-				if_pcnew = 0;
-				if_is_branch = 1;
-			end
-			else begin
-				case(exe_correction)
-					2'b10: begin 
-						if_pcnew = {exe_CNI, 1'h0};
-						if_is_branch = 1; 
-					end
-					2'b11: begin
-						if_pcnew = {exe_PBT, 1'h0};
-						if_is_branch = 1;
-					end
-					default: begin
+		if(ret_ISR) begin
+			if_pcnew = save_PC;
+			if_is_branch = 1;
+        end
+        else if (eret_call) begin
+            if_pcnew = 0;
+			if_is_branch = 1;
+        end
+		else begin
+			case(exe_correction)
+				2'b10: begin 
+				    if_pcnew = {exe_CNI, 1'h0};
+				    if_is_branch = 1; 
+				end
+				2'b11: begin
+				    if_pcnew = {exe_PBT, 1'h0};
+				    if_is_branch = 1;
+				end
+				default: begin
+					if (if_ready) begin
 						case({id_jump_in_bht, id_sel_pc})
 							2'b01: begin
-							if_pcnew = id_branchtarget;
-							if_is_branch = 1;
+								if_pcnew = id_branchtarget;
+								if_is_branch = 1;
 							end
 							default: begin
-							if_pcnew = if_prediction? {if_PBT, 1'h0} : if_pc4;
-							if_is_branch = if_prediction;
+								if_pcnew = if_prediction? {if_PBT, 1'h0} : if_pc4;
+								if_is_branch = if_prediction;
 							end
 						endcase
 					end
-				endcase
-			end
-		end
-		else begin
-			if_pcnew = if_pc4;
-			if_is_branch = 0;
+					else begin
+						if_pcnew = if_pc4;
+						if_is_branch = 0;
+					end
+				end
+			endcase
 		end
 	end
 
