@@ -253,7 +253,7 @@ module sf_controller(
     // Stalls/Enables
     assign if_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold || ((exe_opcode == `OPC_STYPE) && dmem_stall && dmem_ready);
     assign id_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold || ((exe_opcode == `OPC_STYPE) && dmem_stall && dmem_ready);
-    assign exe_stall = (load_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold || ((exe_opcode == `OPC_STYPE) && dmem_stall && dmem_ready);
+    assign exe_stall = (load_hazard || (mem_jalr_hazard && ~dmem_ready) || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold || ((exe_opcode == `OPC_STYPE) && dmem_stall && dmem_ready);
     assign mem_stall = ((load_hazard || dmem_stall) && ~dmem_ready) || mem_hold;					
 
     // Flushes/Resets
