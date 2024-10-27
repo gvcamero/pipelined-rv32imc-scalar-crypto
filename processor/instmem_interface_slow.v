@@ -121,9 +121,11 @@ module instmem_interface_slow (
                         comp_buffer <= inst_t[31:16];
                     end
                     IM_READY_U_A_1: begin             // aligned unfilled buffer check/ready
-                        in_branch <= 0;
                         if (id_stall) begin
                             state <= IM_READY_U_A_1;
+                        end
+                        else if (in_branch) begin
+                            in_branch <= 0;
                         end
                         else begin
                             if (inst_comp) begin
@@ -167,9 +169,11 @@ module instmem_interface_slow (
                         comp_buffer <= comp_buffer;
                     end
                     IM_READY_F_1: begin
-                        in_branch <= 0;
                         if (id_stall) begin
                             state <= IM_READY_F_1;
+                        end
+                        else if (in_branch) begin
+                            in_branch <= 0;
                         end
                         else begin
                             // no compressed instruction in compressed buffer --> check upper half for next instruction
@@ -186,9 +190,11 @@ module instmem_interface_slow (
                         end
                     end
                     IM_READY_F_2: begin
-                        in_branch <= 0;
                         if (id_stall) begin
                             state <= IM_READY_F_2;
+                        end
+                        else if (in_branch) begin
+                            in_branch <= 0;
                         end
                         else begin
                             ready_reg <= 0;
