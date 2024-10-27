@@ -88,7 +88,7 @@ module instmem_interface_slow (
             in_branch <= 0;
         end
         else begin
-            if ((enter_branch && !in_branch) || correction || enter_interrupt) begin
+            if (!id_stall && ((enter_branch && !in_branch) || correction || enter_interrupt)) begin
                 // reset
                 comp_buffer <= 0;
                 inst_buffer <= 0;
