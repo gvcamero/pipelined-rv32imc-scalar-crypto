@@ -33,13 +33,14 @@ module instmem_interface_slow (
     wire [`PC_ADDR_BITS-1:0] inst_addr_t;
     assign inst_addr = inst_addr_t[`PC_ADDR_BITS-1:2];
     wire [`WORD_WIDTH-1:0] inst_t = {inst_data[7:0], inst_data[15:8], inst_data[23:16], inst_data[31:24]};
+    wire branch_hold;
 
     pipereg_if_id IF_ID(
 		.clk(clk),
 		.nrst(nrst),
 
 		.flush(id_flush),
-		.stall(if_stall),
+		.stall(if_stall || branch_hold),
 
 		.if_pc4(if_pc4), 	.id_pc4(id_pc4),
 		.if_inst(if_inst), 	.id_inst(id_inst),
@@ -53,6 +54,7 @@ module instmem_interface_slow (
     reg [3:0] state;
     reg in_branch;
     reg ready_reg;
+    assign branch_hold = in_branch && ready_reg;
 
     wire inst_comp = ~&inst_buffer[1:0];
     wire comp_comp = ~&comp_buffer[1:0];
