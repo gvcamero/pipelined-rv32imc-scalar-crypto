@@ -579,6 +579,7 @@ module core_extmem (
 
         .enter_branch(if_is_branch),
 		.correction(exe_correction[1]),
+		.jump(id_is_jump),
         .enter_interrupt(1'b0),		
     	
     	.if_inst(if_inst),
@@ -644,22 +645,26 @@ module core_extmem (
 				    if_is_branch = 1;
 				end
 				default: begin
-					if (if_ready) begin
+					
 						case({id_jump_in_bht, id_sel_pc})
 							2'b01: begin
 								if_pcnew = id_branchtarget;
 								if_is_branch = 1;
 							end
+														
 							default: begin
-								if_pcnew = if_prediction? {if_PBT, 1'h0} : if_pc4;
-								if_is_branch = if_prediction;
+								if (if_ready) begin
+									if_pcnew = if_prediction? {if_PBT, 1'h0} : if_pc4;
+									if_is_branch = if_prediction;
+								end
+								else begin
+									if_pcnew = if_pc4;
+									if_is_branch = 0;
+								end
 							end
 						endcase
-					end
-					else begin
-						if_pcnew = if_pc4;
-						if_is_branch = 0;
-					end
+					
+					
 				end
 			endcase
 		end

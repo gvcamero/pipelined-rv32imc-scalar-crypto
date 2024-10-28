@@ -16,6 +16,7 @@ module instmem_interface_slow (
     input enter_branch,
     input enter_interrupt,
     input correction,                           				// Branch predictor corrections override current branch
+    input jump,                                                 // Let jumps execute and cancel next instruction issue
     
     output [`PC_ADDR_BITS-1:0] if_pc_out,
     output [`PC_ADDR_BITS-1:0] id_pc_out,
@@ -88,7 +89,7 @@ module instmem_interface_slow (
             in_branch <= 0;
         end
         else begin
-            if (!id_stall && ((enter_branch && !in_branch) || correction || enter_interrupt)) begin
+            if (!id_stall && ((enter_branch && !in_branch) || jump || correction || enter_interrupt)) begin
                 // reset
                 comp_buffer <= 0;
                 inst_buffer <= 0;
