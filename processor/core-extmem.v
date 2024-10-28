@@ -580,6 +580,7 @@ module core_extmem (
         .enter_branch(if_is_branch),
 		.correction(exe_correction[1]),
 		.jump(id_is_jump),
+		.jump_in_bht(id_jump_in_bht),
         .enter_interrupt(1'b0),		
     	
     	.if_inst(if_inst),
