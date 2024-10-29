@@ -298,7 +298,7 @@ module sf_controller(
             else
                 mem_prev_flush <= (exe_prev_flush ? exe_prev_flush : mem_flush);
             wb_prev_flush <= (mem_prev_flush ? mem_prev_flush : wb_flush);
-            mem_hold <= (dmem_stall && dmem_ready && ((exe_sel_data == 3'd3 || (exe_opcode == `OPC_STYPE)) && mem_wr_en)); 
+            mem_hold <= (dmem_stall && dmem_ready);
         end
     end
 endmodule
