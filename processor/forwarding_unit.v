@@ -50,6 +50,7 @@ module forwarding_unit(
 	input [2:0] wb_sel_data,
 
 	input id_is_stype,
+	input id_is_btype,
 
 	input [2:0] id_imm_select,
 
@@ -131,7 +132,7 @@ module forwarding_unit(
     // (LOAD@EXE > JALR@ID)
     assign hzd_exe_to_id_A = (id_rsA == exe_rd) && (id_rsA != 0) &&
 							 exe_wr_en && (exe_sel_data == 3'd3) &&
-							 (id_sel_opBR);
+							 (id_sel_opBR || id_is_btype);
 							  
     // (LOAD@MEM > JALR@ID)
     assign hzd_mem_to_id_A = (id_rsA == mem_rd) && (id_rsA != 0) &&

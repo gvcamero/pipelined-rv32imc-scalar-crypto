@@ -473,6 +473,7 @@ module core_extmem (
 		.wb_sel_data(wb_sel_data),
 
 		.id_is_stype(id_is_stype),
+		.id_is_btype(id_is_btype),
 
 		.id_imm_select(id_imm_select),
 

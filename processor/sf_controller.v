@@ -117,6 +117,7 @@ module sf_controller(
 	input [2:0] wb_sel_data,
 
 	input id_is_stype,
+	input id_is_btype,
 
 	input [2:0] id_imm_select,
 
@@ -186,6 +187,7 @@ module sf_controller(
 		.wb_sel_data(wb_sel_data),
 
 		.id_is_stype(id_is_stype),
+		.id_is_btype(id_is_btype),
 
 		.id_imm_select(id_imm_select),
 
@@ -240,8 +242,9 @@ module sf_controller(
 
     wire loop_jump = (if_pc == if_pcnew) && (if_pc == id_pc) && is_jump && ~id_sel_opBR && ~id_stall && ~exe_flush;
     
-    wire exe_jalr_hazard = hzd_exe_to_id_A && id_sel_opBR;							// LOAD -> JALR (EXE stage) will result in a one-cycle stall for IF and ID stages
-    wire mem_jalr_hazard = hzd_mem_to_id_A && id_sel_opBR;                          // LOAD -> JALR (MEM stage) will result in a one-cycle stall for IF,ID, and EXE stages
+    wire exe_jalr_hazard = hzd_exe_to_id_A;											// LOAD -> JALR (EXE stage) will result in a one-cycle stall for IF and ID stages
+																					// Branches are also affected now, so introduce a stall for them too
+    wire mem_jalr_hazard = hzd_mem_to_id_A;                         				// LOAD -> JALR (MEM stage) will result in a one-cycle stall for IF,ID, and EXE stages
     assign load_hazard = hzd_mem_to_exe_A || (hzd_mem_to_exe_B && ~(exe_opcode == `OPC_STYPE));                	// LOAD -> Other instruction
 																					// Explicit load hazards removed for load->store sequences
 	assign fw_mem_to_exe_B = hzd_mem_to_exe_B;
