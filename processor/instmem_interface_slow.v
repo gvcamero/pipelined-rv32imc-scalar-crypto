@@ -95,7 +95,7 @@ module instmem_interface_slow (
         end
         else begin
             jump_in_bht_hold <= jump_in_bht;
-            if (!id_stall && ((enter_branch && !in_branch) || (jump && !jump_in_bht_hold) || correction || enter_interrupt)) begin
+            if ((!id_stall && ((enter_branch && !in_branch) || (jump && !jump_in_bht))) || correction || enter_interrupt) begin
                 // reset
                 comp_buffer <= 0;
                 inst_buffer <= 0;
