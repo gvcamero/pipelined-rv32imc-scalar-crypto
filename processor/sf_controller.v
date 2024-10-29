@@ -211,6 +211,7 @@ module sf_controller(
 		.fw_wb_to_exe_B(t_fw_wb_to_exe_B),
 
 		.hzd_exe_to_id_A(hzd_exe_to_id_A),
+		.hzd_exe_to_id_B(hzd_exe_to_id_B),
 		.hzd_mem_to_id_A(hzd_mem_to_id_A),
 		.hzd_mem_to_exe_A(hzd_mem_to_exe_A),
 		.hzd_mem_to_exe_B(hzd_mem_to_exe_B)
@@ -244,8 +245,11 @@ module sf_controller(
 
     wire loop_jump = (if_pc == if_pcnew) && (if_pc == id_pc) && is_jump && ~id_sel_opBR && ~id_stall && ~exe_flush;
     
-    wire exe_jalr_hazard = hzd_exe_to_id_A;											// LOAD -> JALR (EXE stage) will result in a one-cycle stall for IF and ID stages
+    wire exe_jalr_hazard = hzd_exe_to_id_A || hzd_exe_to_id_B;											// LOAD -> JALR (EXE stage) will result in a one-cycle stall for IF and ID stages
 																					// Branches are also affected now, so introduce a stall for them too
+																					// Provisional fix: all exe->id hazards from load instructions cause a delay here to prevent load_hazard
+																					// from breaking forwarding logic
+
     wire mem_jalr_hazard = hzd_mem_to_id_A;                         				// LOAD -> JALR (MEM stage) will result in a one-cycle stall for IF,ID, and EXE stages
 																					// Load -> Load instructions also break, so stall for them too
     assign load_hazard = hzd_mem_to_exe_A || (hzd_mem_to_exe_B && ~(exe_opcode == `OPC_STYPE));                	// LOAD -> Other instruction
