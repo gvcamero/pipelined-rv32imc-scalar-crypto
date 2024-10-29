@@ -196,7 +196,7 @@ endmodule
 
 `define NUM_COL 4
 `define COL_WIDTH 8
-`define ADDR_WIDTH `DATAMEM_BITS-1 // Addr Width in bits :
+`define ADDR_WIDTH `DATAMEM_BITS // Addr Width in bits :
  //2**ADDR_WIDTH = RAM Depth
 // `define DATA_WIDTH `NUM_COL*`COL_WIDTH // Data Width in bits
 
