@@ -468,6 +468,7 @@ module core_extmem (
 		.id_sel_opA(id_sel_opA),
 		.id_sel_opB(id_sel_opB),
 
+		.id_sel_data(id_sel_data),
 		.exe_sel_data(exe_sel_data),
 		.mem_sel_data(mem_sel_data),
 		.wb_sel_data(wb_sel_data),

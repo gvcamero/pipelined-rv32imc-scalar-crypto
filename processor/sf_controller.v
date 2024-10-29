@@ -112,6 +112,7 @@ module sf_controller(
 	input id_sel_opA,
 	input id_sel_opB,
 
+	input [2:0] id_sel_data,
 	input [2:0] exe_sel_data,
 	input [2:0] mem_sel_data,
 	input [2:0] wb_sel_data,
@@ -182,6 +183,7 @@ module sf_controller(
 		.id_sel_opA(id_sel_opA),
 		.id_sel_opB(id_sel_opB),
 
+		.id_sel_data(id_sel_data),
 		.exe_sel_data(exe_sel_data),
 		.mem_sel_data(mem_sel_data),
 		.wb_sel_data(wb_sel_data),
@@ -245,6 +247,7 @@ module sf_controller(
     wire exe_jalr_hazard = hzd_exe_to_id_A;											// LOAD -> JALR (EXE stage) will result in a one-cycle stall for IF and ID stages
 																					// Branches are also affected now, so introduce a stall for them too
     wire mem_jalr_hazard = hzd_mem_to_id_A;                         				// LOAD -> JALR (MEM stage) will result in a one-cycle stall for IF,ID, and EXE stages
+																					// Load -> Load instructions also break, so stall for them too
     assign load_hazard = hzd_mem_to_exe_A || (hzd_mem_to_exe_B && ~(exe_opcode == `OPC_STYPE));                	// LOAD -> Other instruction
 																					// Explicit load hazards removed for load->store sequences
 	assign fw_mem_to_exe_B = hzd_mem_to_exe_B;
