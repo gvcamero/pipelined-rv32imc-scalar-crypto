@@ -136,7 +136,7 @@ module forwarding_unit(
 							 exe_wr_en && (exe_sel_data == 3'd3);
 
 	assign hzd_exe_to_id_B = (id_rsB == exe_rd) && (id_rsB != 0) &&
-							 exe_wr_en && (exe_sel_data == 3'd3);
+							 exe_wr_en && (exe_sel_data == 3'd3) && (id_sel_data != 3'd3);		// disable for load-load sequences
 							  
     // (LOAD@MEM > JALR@ID)
     assign hzd_mem_to_id_A = (id_rsA == mem_rd) && (id_rsA != 0) &&
