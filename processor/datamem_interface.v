@@ -63,8 +63,9 @@ module datamem_interface(
     wire is_mem_op = (sb_is_stype || is_load) && ~mem_flush;
     wire [`DATAMEM_BITS-1:0] addr_in = (is_load || store_sel) ? mem_addr_in : exe_addr_in;
     reg [`WORD_WIDTH-1:0] num_cycles;
+    wire [`WORD_WIDTH-1:0] num_cycles_little_e = {num_cycles[7:0], num_cycles[15:8], num_cycles[23:16], num_cycles[31:24]};
     reg [`DATAMEM_BITS-1:0] last_addr_out;
-    wire [`WORD_WIDTH-1:0] local_in = (last_addr_out == 'h7FC) ? num_cycles : lb_data_t;
+    wire [`WORD_WIDTH-1:0] local_in = (last_addr_out == 'h7FC) ? num_cycles_little_e : lb_data_t;
 
     always@(posedge clk) begin
         if (!nrst) begin
