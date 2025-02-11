@@ -39,6 +39,7 @@ module divider_unit(
 	output reg div_running,
 	output reg [31:0] DIVout
 );
+`ifdef FEATURE_DIV
 	// Parameters for div_op
 	parameter DIV = 2'd0;
 	parameter DIVU = 2'd1;
@@ -108,40 +109,42 @@ module divider_unit(
 	// NOTE: aresetn should be active for at least 2 cycles.
 	wire divrem_clken = (~id_div_op_0 & id_div_valid) | (~exe_div_op[0] & exe_div_valid);
 	wire divuremu_clken = (id_div_op_0 & id_div_valid) | (exe_div_op[0] & exe_div_valid);
-	div_gen_signed DIVREM(
-		.aclk(CLK),
-		.aclken(divrem_clken),
-		.aresetn(nrst),
-		
-		.s_axis_dividend_tdata(opA),
-		.s_axis_dividend_tready(div_signed_dividend_tready),
-		.s_axis_dividend_tvalid(div_signed_input_tvalid),
+	
 
-		.s_axis_divisor_tdata(opB),
-		.s_axis_divisor_tready(div_signed_divisor_tready),
-		.s_axis_divisor_tvalid(div_signed_input_tvalid),
+    div_gen_signed DIVREM(
+        .aclk(CLK),
+        .aclken(divrem_clken),
+        .aresetn(nrst),
+        
+        .s_axis_dividend_tdata(opA),
+        .s_axis_dividend_tready(div_signed_dividend_tready),
+        .s_axis_dividend_tvalid(div_signed_input_tvalid),
 
-		.m_axis_dout_tdata(div_signed_out_tdata),
-		.m_axis_dout_tvalid(div_signed_out_tvalid)
-	);
+        .s_axis_divisor_tdata(opB),
+        .s_axis_divisor_tready(div_signed_divisor_tready),
+        .s_axis_divisor_tvalid(div_signed_input_tvalid),
 
-	div_gen_unsigned DIVUREMU(
-		.aclk(CLK),
-		.aclken(divuremu_clken),
-		.aresetn(nrst),
-		
-		.s_axis_dividend_tdata(opA),
-		.s_axis_dividend_tready(div_unsigned_dividend_tready),
-		.s_axis_dividend_tvalid(div_unsigned_input_tvalid),
+        .m_axis_dout_tdata(div_signed_out_tdata),
+        .m_axis_dout_tvalid(div_signed_out_tvalid)
+    );
 
-		.s_axis_divisor_tdata(opB),
-		.s_axis_divisor_tready(div_unsigned_divisor_tready),
-		.s_axis_divisor_tvalid(div_unsigned_input_tvalid),
+    div_gen_unsigned DIVUREMU(
+        .aclk(CLK),
+        .aclken(divuremu_clken),
+        .aresetn(nrst),
+        
+        .s_axis_dividend_tdata(opA),
+        .s_axis_dividend_tready(div_unsigned_dividend_tready),
+        .s_axis_dividend_tvalid(div_unsigned_input_tvalid),
 
-		.m_axis_dout_tdata(div_unsigned_out_tdata),
-		.m_axis_dout_tvalid(div_unsigned_out_tvalid)
-	);
+        .s_axis_divisor_tdata(opB),
+        .s_axis_divisor_tready(div_unsigned_divisor_tready),
+        .s_axis_divisor_tvalid(div_unsigned_input_tvalid),
 
+        .m_axis_dout_tdata(div_unsigned_out_tdata),
+        .m_axis_dout_tvalid(div_unsigned_out_tvalid)
+    );
+    
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 //-=-				DIV_STATE CONTROL 			 =-=//
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
@@ -215,4 +218,12 @@ module divider_unit(
 				endcase
 		end
 	end
+    `else
+        // Tie all outputs to 0 (temporary solution)
+        initial begin
+            div_running = 0;
+            DIVout = 0;
+        end
+    `endif
+
 endmodule

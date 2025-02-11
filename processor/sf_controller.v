@@ -51,6 +51,8 @@ module sf_controller(
 
     // IF stage
     input [`PC_ADDR_BITS-1:0] if_pc,
+	input [`PC_ADDR_BITS-1:0] if_pcnew,
+    input if_ready,
 
     // ID stage inputs
 	input [`PC_ADDR_BITS-1:0] id_pc,
@@ -65,10 +67,15 @@ module sf_controller(
 
     input mul_stall,            // Stall due to multiplication
     input div_running,			// Status of Divider unit
+    
+    input dmem_stall,           // Stall in datamem unit 
+    input dmem_ready,           // Datamem load output ready
 
     // Stalls/Enables
 	output if_stall,			// controls PC + instmem stall
 	output id_stall,			// controls IF/ID pipeline register stall
+	output exe_stall,
+	output mem_stall,
 
 	// Flushes/Resets (flushes act as active-high resets)
 	output if_flush,			// controls PC flush
@@ -105,11 +112,13 @@ module sf_controller(
 	input id_sel_opA,
 	input id_sel_opB,
 
+	input [2:0] id_sel_data,
 	input [2:0] exe_sel_data,
 	input [2:0] mem_sel_data,
 	input [2:0] wb_sel_data,
 
 	input id_is_stype,
+	input id_is_btype,
 
 	input [2:0] id_imm_select,
 
@@ -132,6 +141,7 @@ module sf_controller(
 	// Forwarding to EXE stage
 	output fw_wb_to_exe_A,
 	output fw_wb_to_exe_B,
+	output fw_mem_to_exe_B,
     output load_hazard          // result of having a L[W/H/B] -> EXE hazard
 );
 
@@ -173,11 +183,13 @@ module sf_controller(
 		.id_sel_opA(id_sel_opA),
 		.id_sel_opB(id_sel_opB),
 
+		.id_sel_data(id_sel_data),
 		.exe_sel_data(exe_sel_data),
 		.mem_sel_data(mem_sel_data),
 		.wb_sel_data(wb_sel_data),
 
 		.id_is_stype(id_is_stype),
+		.id_is_btype(id_is_btype),
 
 		.id_imm_select(id_imm_select),
 
@@ -199,6 +211,7 @@ module sf_controller(
 		.fw_wb_to_exe_B(t_fw_wb_to_exe_B),
 
 		.hzd_exe_to_id_A(hzd_exe_to_id_A),
+		.hzd_exe_to_id_B(hzd_exe_to_id_B),
 		.hzd_mem_to_id_A(hzd_mem_to_id_A),
 		.hzd_mem_to_exe_A(hzd_mem_to_exe_A),
 		.hzd_mem_to_exe_B(hzd_mem_to_exe_B)
@@ -213,10 +226,11 @@ module sf_controller(
 		  Thus, it corresponds to the EXE stage on the current cycle.
 
 	*/
-	reg id_prev_flush = 0;
-	reg exe_prev_flush = 0;
-	reg mem_prev_flush = 0;
-    reg wb_prev_flush = 0;
+	reg id_prev_flush;
+	reg exe_prev_flush;
+	reg mem_prev_flush;
+    reg wb_prev_flush;
+    reg mem_hold;
 
     // results of forwarding
     assign fw_exe_to_id_A = t_fw_exe_to_id_A;
@@ -229,58 +243,46 @@ module sf_controller(
     assign fw_wb_to_exe_A = t_fw_wb_to_exe_A && !wb_prev_flush;
     assign fw_wb_to_exe_B = t_fw_wb_to_exe_B && !wb_prev_flush;
 
-    wire loop_jump = (if_pc == id_pc) && is_jump && ~id_sel_opBR && ~id_stall && ~exe_flush;
+    wire loop_jump = (if_pc == if_pcnew) && (if_pc == id_pc) && is_jump && ~id_sel_opBR && ~id_stall && ~exe_flush;
     
-    wire exe_jalr_hazard = hzd_exe_to_id_A && id_sel_opBR;							// LOAD -> JALR (EXE stage) will result in a one-cycle stall for IF and ID stages
-    wire mem_jalr_hazard = hzd_mem_to_id_A && id_sel_opBR;                          // LOAD -> JALR (MEM stage) will result in a one-cycle stall for IF,ID, and EXE stages
-    assign load_hazard = (hzd_mem_to_exe_A || hzd_mem_to_exe_B) && !mem_prev_flush;	// LOAD -> Other instruction
-    /* load_hazard result:
-        1st cycle: no clock for IF, ID, EXE stage registers
-        2nd cycle: no clock for WB stage registers
-        3rd cycle: no clock for RF writeback
+    wire exe_jalr_hazard = hzd_exe_to_id_A || hzd_exe_to_id_B;											// LOAD -> JALR (EXE stage) will result in a one-cycle stall for IF and ID stages
+																					// Branches are also affected now, so introduce a stall for them too
+																					// Provisional fix: all exe->id hazards from load instructions cause a delay here to prevent load_hazard
+																					// from breaking forwarding logic
+
+    wire mem_jalr_hazard = hzd_mem_to_id_A;                         				// LOAD -> JALR (MEM stage) will result in a one-cycle stall for IF,ID, and EXE stages
+																					// Load -> Load instructions also break, so stall for them too
+    assign load_hazard = hzd_mem_to_exe_A || (hzd_mem_to_exe_B && ~(exe_opcode == `OPC_STYPE));                	// LOAD -> Other instruction
+																					// Explicit load hazards removed for load->store sequences
+	assign fw_mem_to_exe_B = hzd_mem_to_exe_B;
+    
+    /* 
+        Load hazard: wait until load instruction leaves MEM stage
     */
     
     // Stalls/Enables
-    assign if_stall = ((load_hazard  && ~mem_prev_flush) || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall);
-    assign id_stall = ((load_hazard  && ~mem_prev_flush) || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall);
-    wire exe_stall = ((load_hazard  && ~mem_prev_flush) || mem_jalr_hazard || div_running || mul_stall);					
+    assign if_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold || ((exe_opcode == `OPC_STYPE) && dmem_stall && dmem_ready);
+    assign id_stall = (load_hazard || exe_jalr_hazard || mem_jalr_hazard || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold || ((exe_opcode == `OPC_STYPE) && dmem_stall && dmem_ready);
+    assign exe_stall = (load_hazard || (mem_jalr_hazard && ~dmem_ready) || div_running || mul_stall || (dmem_stall && ~dmem_ready)) || mem_hold || ((exe_opcode == `OPC_STYPE) && dmem_stall && dmem_ready);
+    assign mem_stall = ((load_hazard || dmem_stall) && ~dmem_ready) || mem_hold;					
 
     // Flushes/Resets
     assign if_flush = ISR_PC_flush;
-    assign id_flush = ISR_pipe_flush || jump_flush || branch_flush;
-    assign exe_flush = exe_jalr_hazard || branch_flush || (is_nop && ~(load_hazard  && ~mem_prev_flush));
-    assign mem_flush = (load_hazard && ~mem_prev_flush) || div_running || mul_stall;	// flushing the MEM-stage for two straight cycles is disabled for forwarding reasons
-    assign wb_flush = 1'b0;
+    assign id_flush = (ISR_pipe_flush || jump_flush || branch_flush) || (!if_ready && !id_stall);
+    assign exe_flush = exe_jalr_hazard || branch_flush || (is_nop && ~mem_stall);
+    assign mem_flush = (div_running || mul_stall) || (load_hazard && dmem_ready) || ((exe_opcode == `OPC_STYPE) && dmem_ready);	
+    assign wb_flush = mem_stall;
 
     // Enables
-	reg prev_nrst = 0;
+	reg prev_nrst;
     wire shut_down = (prev_nrst && ~nrst);
-	// A note: the shut_down signal is meant to be a stopgap measure that should be re-evaluated depending on
-	// how the processor core is meant to reset or not between cases of nrst deasserting.
-	// In other words, this signal solves a problem where the processor does not actually reset when nrst is deasserted
-	// due to the nature of the clock enable signals. (Alternatively, all registers could be changed to asynchronous resets, but
-	// it's considered bad practice, so we didn't do it).
-	//
-	// The processor resetting when nrst is deasserted is intended, but other behavior may be desired.
-	// For example, a signal to put the processor to sleep until it is meant to wake up, without going through polling loop
-	// or waiting for an interrupt.
-	//
-	// I'm definitely overthinking this.
 
     assign if_clk_en = shut_down || (~(if_stall || (loop_jump && ~ISR_pipe_flush)) && nrst);
     assign id_clk_en = shut_down || (~(id_stall || (loop_jump && ~ISR_pipe_flush)) && nrst);
     assign exe_clk_en = shut_down || (~(exe_stall || (id_prev_flush && ~exe_flush) || (is_nop && ~exe_flush)) && nrst);
-    assign mem_clk_en = shut_down || (~(mem_flush || (exe_prev_flush && ~mem_jalr_hazard)) && nrst);
+    assign mem_clk_en = shut_down || (~(mem_stall || mem_flush || (exe_prev_flush && ~mem_jalr_hazard)) && nrst);
     assign wb_clk_en = shut_down || (~mem_prev_flush && nrst);
     assign rf_clk_en = shut_down ||  (~wb_prev_flush && wb_wr_en && nrst);
-
-	initial begin
-		prev_nrst <= 1'b0;
-		id_prev_flush <= 1'b0;
-		exe_prev_flush <= 1'b0;
-		mem_prev_flush <= 1'b0;
-		wb_prev_flush <= 1'b0;
-	end
 
     always@(posedge clk) begin
         if (!nrst) begin
@@ -289,13 +291,18 @@ module sf_controller(
             exe_prev_flush <= 1'b0;
             mem_prev_flush <= 1'b0;
             wb_prev_flush <= 1'b0;
+            mem_hold <= 1'b0;
         end
         else begin
 			prev_nrst <= 1'b1;
             id_prev_flush <= ((id_flush || loop_jump) && ~ISR_pipe_flush);
             exe_prev_flush <= (id_prev_flush ? id_prev_flush : exe_flush);
-            mem_prev_flush <= (exe_prev_flush ? exe_prev_flush : mem_flush);
+            if (mem_stall)
+                mem_prev_flush <= (exe_prev_flush ? exe_prev_flush : 1'b0);
+            else
+                mem_prev_flush <= (exe_prev_flush ? exe_prev_flush : mem_flush);
             wb_prev_flush <= (mem_prev_flush ? mem_prev_flush : wb_flush);
+            mem_hold <= (dmem_stall && dmem_ready);
         end
     end
 endmodule

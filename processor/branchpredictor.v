@@ -40,7 +40,8 @@ module branchpredictor(
 
 	input ISR_running,
 
-	input stall,
+    input hold,                 // IF stage stall only
+	input stall,                // ID stage stall 
 
 	// Inputs
 	input [`BHT_PC_ADDR_BITS-1:0] if_PC,
@@ -72,9 +73,9 @@ module branchpredictor(
 	output if_prediction,
 	output [1:0] exe_correction,
 
-	output reg jump_flush,
-	output reg branch_flush,
-	output reg id_jump_in_bht,	// added as an input w/ sel_pc s.t. branch target is selected
+	output jump_flush,
+	output branch_flush,
+	output id_jump_in_bht,	    // added as an input w/ sel_pc s.t. branch target is selected
 								// only when this signal is not asserted, which happens only
 								// when the jump instruction is not yet saved into the table
 
@@ -282,14 +283,6 @@ module branchpredictor(
 	// WRITES TO FIFO_COUNTER & HISTORY_TABLE
 	// Initialize registers
 	integer i;
-	initial begin
-		for(i = 0; i < (`BHT_ENTRY/4); i=i+1) begin
-			fifo_counter[i] <= 2'b0;
-		end
-		for(i = 0; i < `BHT_ENTRY; i=i+1) begin
-			history_table[i] <= {`BHT_ENTRY_BITS{1'b0}};
-		end
-	end
 	
 	always@(posedge CLK) begin
 		if(!nrst) begin
@@ -329,31 +322,74 @@ module branchpredictor(
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	//Flushing
+	reg branch_flush_t;
+	reg jump_flush_t;
+	reg id_jump_in_bht_t;
+	
 	always@(*) begin
 		if(!stall) begin
 			if( ((|exe_btype || |exe_c_btype) && !is_pred_correct) || (exe_sel_opBR && (exe_branchtarget != exe_loadentry[`BHT_PC_ADDR_BITS+1:2])) )
-				branch_flush = 1;
+				branch_flush_t = 1;
 			else
-				branch_flush = 0;
+				branch_flush_t = 0;
 		end else
-			branch_flush = 0;
+			branch_flush_t = 0;
 	end
 
 	always@(*) begin
 		if(!stall)
 			if(id_is_jump && id_iseqto == 4'h0)
-				jump_flush = 1;
+				jump_flush_t = 1;
 			else
-				jump_flush = 0;
+				jump_flush_t = 0;
 		else
-			jump_flush = 0;
+		    jump_flush_t = 0;
 	end
 	
 	always@(*) begin
 		if(id_is_jump && id_iseqto != 4'h0)
-			id_jump_in_bht = 1'b1;
+			id_jump_in_bht_t = 1'b1;
 		else 
-			id_jump_in_bht = 1'b0;
+			id_jump_in_bht_t = 1'b0;
 	end
+	
+	// Hold Flushes for IF stage stalls
+	reg hold_state;
+    reg branch_flush_reg;
+	reg jump_flush_reg;
+	reg id_jump_in_bht_reg;
+	
+	always@(posedge CLK) begin
+	   if(!nrst) begin
+	       hold_state <= 0;
+	       branch_flush_reg <= 0;
+           jump_flush_reg <= 0;
+           id_jump_in_bht_reg <= 0;
+	   end
+	   else begin
+	       if (hold) begin
+	           // Hold last state (fed to instmem interface)
+	           hold_state <= 1;
+               branch_flush_reg <= branch_flush_t;
+               jump_flush_reg <= jump_flush_t;
+               id_jump_in_bht_reg <= id_jump_in_bht_t;
+	       end
+	       else begin
+	           hold_state <= 0;
+               branch_flush_reg <= 0;
+               jump_flush_reg <= 0;
+               id_jump_in_bht_reg <= 0;
+	       end
+	   end
+	end
+	
+	/*
+	assign branch_flush = hold_state ? branch_flush_reg : branch_flush_t;
+	assign jump_flush = hold_state ? jump_flush_reg : jump_flush_t;
+	assign id_jump_in_bht = hold_state ? id_jump_in_bht_reg : id_jump_in_bht_t;
+	*/
+	assign branch_flush = branch_flush_t;
+	assign jump_flush = jump_flush_t;
+    assign id_jump_in_bht = id_jump_in_bht_t;
 	////////////////////////////////////////////////////////////////////////////////////////
 endmodule

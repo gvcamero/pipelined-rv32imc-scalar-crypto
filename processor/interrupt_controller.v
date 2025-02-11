@@ -45,11 +45,12 @@ module interrupt_controller(
 	output reg ret_ISR,				// selects save_PC as input to PC; return from ISR
 
 	output reg ISR_running,			// Determines if the ISR is running. Asserted until pipeline switches back from ISR to main program.
-	output reg [`PC_ADDR_BITS-1:0] save_PC		// saved PC address
+	output reg [`PC_ADDR_BITS-1:0] save_PC,		// saved PC address
+	output reg eret_call
 );
 
     // Declare wires & regs
-	integer i = 0;					// Used for FOR loops
+	integer i;					// Used for FOR loops
     reg [2:0] ISR_stall_counter;	// Used for counting how many cycles the pipeline should "stall" before running the ISR; start/end sequence initiates once counter value != 0
     reg [`INT_SIG_WIDTH-1:0] ISR_en;// Interrupts can be triggered only if this signal is asserted
 	reg interrupt_captured;			// Asserts for 1 cycle when int_sig & ISR_en are both asserted
@@ -81,19 +82,6 @@ module interrupt_controller(
 	//		+ When a branch is taken during start sequence; This is to make sure that save_PC also captures the branch target address
 	// It is not asserted when the ISR is running & during the end sequence (since there is no need to update save_PC during these conditions)
     assign save_PC_en = (interrupt_captured || (ISR_stall & ((exe_correction!=0) | if_prediction | (id_sel_pc & !id_jump_in_bht)))) & !(ISR_running);
-
-    // Initializing registers
-	initial begin
-		sel_ISR <= 0;
-		ret_ISR <= 0;
-        interrupt_captured <= 0;
-		save_PC <= 0;
-		ISR_running <= 0;
-		ISR_stall_counter <= 0;
-		
-		for(i = 0; i < `INT_SIG_WIDTH; i = i+1)
-			ISR_en[i] <= 1'b1;
-	end
 
     // This controls save_PC
     always@(posedge clk) begin
@@ -164,22 +152,34 @@ module interrupt_controller(
             sel_ISR <= 0;
             ret_ISR <= 0;
             ISR_running <= 0;
+            eret_call <= 0;
         end else begin
-            // Initiate ISR end sequence once URET opcode is detected
-            if(exe_opcode == `OPC_URET) begin
-                ret_ISR <= 1;
-                sel_ISR <= 0;
+            if (ISR_running) begin
+                eret_call <= 0;
+                // Initiate ISR end sequence once URET opcode is detected
+                if(exe_opcode == `OPC_URET) begin
+                    ret_ISR <= 1;
+                    sel_ISR <= 0;
+                end
+    
+                // ISR_running logic
+                if((ISR_stall_counter == 3'd5) & !ISR_running) begin
+                    ISR_running <= 1;
+                    sel_ISR <= 1;
+                end else if((ISR_stall_counter == 3'd3) & ISR_running) begin
+                    ISR_running <= 0;
+                    ret_ISR <= 0;
+                end
             end
-
-			// ISR_running logic
-            if((ISR_stall_counter == 3'd5) & !ISR_running) begin
-                ISR_running <= 1;
-                sel_ISR <= 1;
-            end else if((ISR_stall_counter == 3'd3) & ISR_running) begin
-                ISR_running <= 0;
+            // ERET called outside interrupt context
+            else begin
                 ret_ISR <= 0;
+                sel_ISR <= 0;
+                if(exe_opcode == `OPC_URET || eret_call)
+                    eret_call <= 1;
+                else
+                    eret_call <= 0;
             end
-
         end
     end
 	

@@ -22,6 +22,7 @@ module pipereg_exe_mem(
 	input clk,
 	input nrst,
 	
+	input stall,
 	input flush,
 
 	input [`PC_ADDR_BITS-1:0] exe_pc4,
@@ -42,9 +43,18 @@ module pipereg_exe_mem(
 	input [`REGFILE_BITS-1:0] exe_rd,
 	output reg [`REGFILE_BITS-1:0] mem_rd,
 
+	input [`WORD_WIDTH-1:0] exe_rstore,
+	output reg [`WORD_WIDTH-1:0] mem_rstore,
+
+	input exe_is_stype,
+	output reg mem_is_stype,
+
+	input [1:0] exe_store_select,
+	output reg [1:0] mem_store_select,
+
 	// Control signals
-	input [3:0] exe_dm_write,
-	output reg [3:0] mem_dm_write,
+	// input [3:0] exe_dm_write,
+	// output reg [3:0] mem_dm_write,
 
 	input exe_wr_en,
 	output reg mem_wr_en,
@@ -56,49 +66,75 @@ module pipereg_exe_mem(
 	output reg [2:0] mem_sel_data
 );
 	
-	initial begin
-		mem_pc4 <= 0;	
-		mem_ALUout <= 0;
-		mem_DIVout <= 0;
-		mem_storedata <= 0;
-		mem_imm <= 0;
-		mem_rd <= 0;
-
-		// Control signals
-		mem_dm_write <= 0;
-		mem_wr_en <= 0;
-		mem_dm_select <= 0;
-		mem_sel_data <= 0;
-	end
-	
 	always@(posedge clk) begin
-		if(!nrst || flush) begin
+		if(!nrst) begin
 			mem_pc4 <= 0;	
 			mem_ALUout <= 0;
 			mem_DIVout <= 0;
 			mem_storedata <= 0;
 			mem_imm <= 0;
 			mem_rd <= 0;
+			mem_rstore <= 0;
+			mem_is_stype <= 0;
+			mem_store_select <= 0;
 
 			// Control signals
-			mem_dm_write <= 0;
+			// mem_dm_write <= 0;
 			mem_wr_en <= 0;
 			mem_dm_select <= 0;
 			mem_sel_data <= 0;
 		end
 		else begin
-			mem_pc4 <= exe_pc4;
-			mem_ALUout <= exe_ALUout;
-			mem_DIVout <= exe_DIVout;
-			mem_storedata <= exe_storedata;
-			mem_imm <= exe_imm;
-			mem_rd <= exe_rd;
-
-			// Control signals
-			mem_dm_write <= exe_dm_write;
-			mem_wr_en <= exe_wr_en;
-			mem_dm_select <= exe_dm_select;
-			mem_sel_data <= exe_sel_data;
+		    if(flush) begin
+                mem_pc4 <= 0;	
+                mem_ALUout <= 0;
+                mem_DIVout <= 0;
+                mem_storedata <= 0;
+                mem_imm <= 0;
+                mem_rd <= 0;
+				mem_rstore <= 0;
+				mem_is_stype <= 0;
+				mem_store_select <= 0;
+    
+                // Control signals
+                // mem_dm_write <= 0;
+                mem_wr_en <= 0;
+                mem_dm_select <= 0;
+                mem_sel_data <= 0;
+            end else if (!stall) begin
+                mem_pc4 <= exe_pc4;
+                mem_ALUout <= exe_ALUout;
+                mem_DIVout <= exe_DIVout;
+                mem_storedata <= exe_storedata;
+                mem_imm <= exe_imm;
+                mem_rd <= exe_rd;
+				mem_rstore <= exe_rstore;
+				mem_is_stype <= exe_is_stype;
+				mem_store_select <= exe_store_select;
+    
+                // Control signals
+                // mem_dm_write <= exe_dm_write;
+                mem_wr_en <= exe_wr_en;
+                mem_dm_select <= exe_dm_select;
+                mem_sel_data <= exe_sel_data;
+            end
+            else begin
+                mem_pc4 <= mem_pc4;
+                mem_ALUout <= mem_ALUout;
+                mem_DIVout <= mem_DIVout;
+                mem_storedata <= mem_storedata;
+                mem_imm <= mem_imm;
+                mem_rd <= mem_rd;
+				mem_rstore <= mem_rstore;
+				mem_is_stype <= mem_is_stype;
+				mem_store_select <= mem_store_select;
+    
+                // Control signals
+                // mem_dm_write <= mem_dm_write;
+                mem_wr_en <= mem_wr_en;
+                mem_dm_select <= mem_dm_select;
+                mem_sel_data <= mem_sel_data;
+            end
 		end
 	end
 

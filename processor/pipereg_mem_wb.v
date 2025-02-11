@@ -22,6 +22,7 @@ module pipereg_mem_wb(
 	input clk,
 	input nrst,
 
+    input stall,
 	input flush,
 
 	input [`PC_ADDR_BITS-1:0] mem_pc4,
@@ -50,21 +51,8 @@ module pipereg_mem_wb(
 	output reg [2:0] wb_sel_data
 );
 
-	initial begin
-		wb_pc4 <= 0;
-		wb_ALUout <= 0;
-		wb_DIVout <= 0;
-		wb_loaddata <= 0;
-		wb_imm <= 0;
-		wb_rd <= 0;
-
-		// Control signals
-		wb_wr_en <= 0;
-		wb_sel_data <= 0;
-	end
-
 	always@(posedge clk) begin
-		if(!nrst || flush) begin
+		if(!nrst) begin
 			wb_pc4 <= 0;
 			wb_ALUout <= 0;
 			wb_DIVout <= 0;
@@ -75,18 +63,41 @@ module pipereg_mem_wb(
 			// Control signals
 			wb_wr_en <= 0;
 			wb_sel_data <= 0;
-
 		end else begin
-			wb_pc4 <= mem_pc4;
-			wb_ALUout <= mem_ALUout;
-			wb_DIVout <= mem_DIVout;
-			wb_loaddata <= mem_loaddata;
-			wb_imm <= mem_imm;
-			wb_rd <= mem_rd;
-
-			// Control signals
-			wb_wr_en <= mem_wr_en;
-			wb_sel_data <= mem_sel_data;
+		     if(flush) begin
+                wb_pc4 <= 0;
+                wb_ALUout <= 0;
+                wb_DIVout <= 0;
+                wb_loaddata <= 0;
+                wb_imm <= 0;
+                wb_rd <= 0;
+    
+                // Control signals
+                wb_wr_en <= 0;
+                wb_sel_data <= 0;
+		    end else if (!stall) begin
+                wb_pc4 <= mem_pc4;
+                wb_ALUout <= mem_ALUout;
+                wb_DIVout <= mem_DIVout;
+                wb_loaddata <= mem_loaddata;
+                wb_imm <= mem_imm;
+                wb_rd <= mem_rd;
+    
+                // Control signals
+                wb_wr_en <= mem_wr_en;
+                wb_sel_data <= mem_sel_data;
+            end else begin
+                wb_pc4 <= wb_pc4;
+                wb_ALUout <= wb_ALUout;
+                wb_DIVout <= wb_DIVout;
+                wb_loaddata <= wb_loaddata;
+                wb_imm <= wb_imm;
+                wb_rd <= wb_rd;
+    
+                // Control signals
+                wb_wr_en <= wb_wr_en;
+                wb_sel_data <= wb_sel_data;
+            end
 		end
 	end
 

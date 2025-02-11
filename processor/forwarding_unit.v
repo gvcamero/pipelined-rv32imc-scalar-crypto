@@ -45,11 +45,13 @@ module forwarding_unit(
 	input id_sel_opA,
 	input id_sel_opB,
 
+	input [2:0] id_sel_data,
 	input [2:0] exe_sel_data,
 	input [2:0] mem_sel_data,
 	input [2:0] wb_sel_data,
 
 	input id_is_stype,
+	input id_is_btype,
 
 	input [2:0] id_imm_select,
 
@@ -74,6 +76,7 @@ module forwarding_unit(
 
 	// Load-use hazards
 	output hzd_exe_to_id_A,
+	output hzd_exe_to_id_B,
 	output hzd_mem_to_id_A,
 	output hzd_mem_to_exe_A,
 	output hzd_mem_to_exe_B
@@ -130,13 +133,15 @@ module forwarding_unit(
     // Load-use hazard detection
     // (LOAD@EXE > JALR@ID)
     assign hzd_exe_to_id_A = (id_rsA == exe_rd) && (id_rsA != 0) &&
-							 exe_wr_en && (exe_sel_data == 3'd3) &&
-							 (id_sel_opBR);
+							 exe_wr_en && (exe_sel_data == 3'd3);
+
+	assign hzd_exe_to_id_B = (id_rsB == exe_rd) && (id_rsB != 0) &&
+							 exe_wr_en && (exe_sel_data == 3'd3) && (id_sel_data != 3'd3);		// disable for load-load sequences
 							  
     // (LOAD@MEM > JALR@ID)
     assign hzd_mem_to_id_A = (id_rsA == mem_rd) && (id_rsA != 0) &&
 							 mem_wr_en && (mem_sel_data == 3'd3) &&
-							 (id_sel_opBR);
+							 (id_sel_opBR || (id_sel_data == 3'd3));
 
 	// assign hzd_exe_to_id_B
 
