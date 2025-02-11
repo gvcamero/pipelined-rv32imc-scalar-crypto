@@ -73,7 +73,6 @@ module core_extmem (
 	`else
 		wire [`WORD_WIDTH-1:0] ext_if_inst;
 		wire [`WORD_WIDTH-1:0] ext_id_inst;
-		wire ext_trace_ready;
 	`endif
 
 	assign ext_data_wr_en = |ext_data_write;
@@ -419,8 +418,8 @@ module core_extmem (
 		.is_jump(id_is_jump),
 		.is_nop(id_is_nop),
 
-		.ISR_PC_flush(1'b0),
-		.ISR_pipe_flush(1'b0),
+		.ISR_PC_flush(ISR_PC_flush),
+		.ISR_pipe_flush(ISR_pipe_flush),
 		.branch_flush(branch_flush),
 		.jump_flush(jump_flush),
 		.mul_stall(mul_stall),
@@ -630,14 +629,11 @@ module core_extmem (
 	// branches/jumps in the IF stage that are predicted to take the branch target won't get
 	// executed since they're supposed to be flushed anyway.
 	always@(*) begin
-		/*
 		if(ret_ISR) begin
 			if_pcnew = save_PC;
 			if_is_branch = 1;
         end
-		*/
-        // else 
-		if (eret_call) begin
+        else if (eret_call) begin
             if_pcnew = 0;
 			if_is_branch = 1;
         end
@@ -941,7 +937,7 @@ module core_extmem (
 		.CLK(clk),
 		.nrst(nrst),
 
-		.ISR_running(1'b0),
+		.ISR_running(ISR_running),
 
 		.stall(id_stall),
 		.hold(if_stall),
