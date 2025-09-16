@@ -1,0 +1,645 @@
+	.size	main, .-main
+	.globl	key
+	.globl	plaintext
+	.globl	key_schedule
+	.globl	temp_block_ptr
+	.globl	temp_block
+	.section	.rodata
+	.align	2
+	.set	.LANCHOR0,. + 0
+	.type	fsbox, @object
+	.size	fsbox, 256
+fsbox:
+	.base64	"Y3x3e/Jrb8UwAWcr/terdsqCyX36WUfwrdSir5ykcsC3/ZMmNj/3zDSl5fFx2DEVBMcjwxiWBZoHEoDi6yeydQmDLBobblqgUjvWsynjL4RT0QDtIPyxW2rLvjlKTFjP0O+q+0NNM4VF+QJ/UDyfqFGjQI+SnTj1vLbaIRD/89LNDBPsX5dEF8Snfj1kXRlzYIFP3CIqkIhG7rgU3l4L2+AyOgpJBiRcwtOsYpGV5HnnyDdtjdVOqWxW9Opleq4IunglLhymtMbo3XQfS72LinA+tWZIA/YOYTVXuYbBHZ7h+JgRadmOlJseh+nOVSjfjKGJDb/mQmhBmS0PsFS7"
+	.ascii	"\026"
+	.data
+	.align	2
+	.set	.LANCHOR2,. + 0
+	.type	key, @object
+	.size	key, 16
+key:
+	.base64	"K34VFiiu0qar9xWICc9PPA=="
+	.type	plaintext, @object
+	.size	plaintext, 16
+plaintext:
+	.base64	"9p8kRd9PmxetK0F75mw3EA=="
+	.bss
+	.align	2
+	.set	.LANCHOR1,. + 0
+	.type	temp_block, @object
+	.size	temp_block, 16
+temp_block:
+	.zero	16
+	.type	key_schedule, @object
+	.size	key_schedule, 160
+key_schedule:
+	.zero	160
+	.section	.sdata,"aw"
+	.align	2
+	.type	temp_block_ptr, @object
+	.size	temp_block_ptr, 4
+temp_block_ptr:
+	.word	temp_block
+	.ident	"GCC: (g1b306039a) 15.1.0"
+	.section	.note.GNU-stack,"",@progbits
+
+	.file	"AES-ENC-FINAL.c"
+	.option nopic
+	.attribute arch, "rv32i2p1_m2p0_zmmul1p0"
+	.attribute unaligned_access, 0
+	.attribute stack_align, 16
+	.text
+	.align	2
+	.globl	xTIMES
+	.type	xTIMES, @function
+xTIMES:
+	slli	a5,a0,24
+	srai	a5,a5,24
+	slli	a0,a5,1
+	bge	a5,zero,.L2
+	xori	a0,a0,27
+.L2:
+	andi	a0,a0,0xff
+	ret
+	.size	xTIMES, .-xTIMES
+	.align	2
+	.globl	SubBytes
+	.type	SubBytes, @function
+SubBytes:
+	lui	a4,%hi(.LANCHOR0)
+	addi	a3,a0,16
+	addi	a4,a4,%lo(.LANCHOR0)
+.L5:
+	lbu	a5,0(a0)
+	addi	a0,a0,1
+	add	a5,a4,a5
+	lbu	a5,0(a5)
+	sb	a5,-1(a0)
+	bne	a0,a3,.L5
+	ret
+	.size	SubBytes, .-SubBytes
+	.align	2
+	.globl	ShiftMixARK
+	.type	ShiftMixARK, @function
+ShiftMixARK:
+	lui	a5,%hi(temp_block_ptr)
+	lw	a4,0(a0)
+	lw	a5,%lo(temp_block_ptr)(a5)
+	addi	sp,sp,-16
+	sw	s0,12(sp)
+	sw	a4,0(a5)
+	lw	a4,4(a0)
+	lui	t4,%hi(.LANCHOR1)
+	mv	t1,a0
+	sw	a4,4(a5)
+	lw	a4,8(a0)
+	addi	t4,t4,%lo(.LANCHOR1)
+	li	a6,5
+	sw	a4,8(a5)
+	lw	a4,12(a0)
+	li	t5,21
+	sw	a4,12(a5)
+.L12:
+	add	a5,t4,a6
+	lbu	a0,-5(a5)
+	addi	a4,a6,5
+	addi	a5,a6,10
+	andi	t3,a6,15
+	andi	a4,a4,15
+	andi	a5,a5,15
+	add	a5,t4,a5
+	add	t3,t4,t3
+	add	a4,t4,a4
+	lbu	a3,0(a4)
+	lbu	a7,0(a5)
+	lbu	t6,0(t3)
+	slli	a2,a0,24
+	srai	a2,a2,24
+	slli	t0,a3,24
+	slli	t2,a7,24
+	slli	a5,t6,24
+	addi	a6,a6,4
+	slli	s0,a2,1
+	srai	t0,t0,24
+	srai	t2,t2,24
+	xor	t3,a3,t6
+	srai	a5,a5,24
+	bge	a2,zero,.L8
+	xori	s0,s0,27
+.L8:
+	mv	a2,s0
+	slli	a4,a5,1
+	bge	a5,zero,.L9
+	xori	a4,a4,27
+.L9:
+	lbu	a5,0(a1)
+	xor	a5,a7,a5
+	xor	a5,t3,a5
+	xor	a5,a2,a5
+	xor	a5,a4,a5
+	sb	a5,0(t1)
+	slli	a5,t0,1
+	bge	t0,zero,.L10
+	xori	a5,a5,27
+.L10:
+	lbu	t0,1(a1)
+	xor	t0,a0,t0
+	xor	a3,a3,t0
+	xor	a3,a7,a3
+	xor	a4,a4,a3
+	xor	a4,a5,a4
+	sb	a4,1(t1)
+	slli	a4,t2,1
+	bge	t2,zero,.L11
+	xori	a4,a4,27
+.L11:
+	lbu	a3,2(a1)
+	addi	t1,t1,4
+	addi	a1,a1,4
+	xor	a3,a0,a3
+	xor	t6,t6,a3
+	xor	a7,a7,t6
+	xor	a5,a5,a7
+	xor	a5,a4,a5
+	sb	a5,-2(t1)
+	lbu	a5,-1(a1)
+	xor	a0,a0,a5
+	xor	t3,t3,a0
+	xor	a2,a2,t3
+	xor	a4,a4,a2
+	sb	a4,-1(t1)
+	bne	a6,t5,.L12
+	lw	s0,12(sp)
+	addi	sp,sp,16
+	jr	ra
+	.size	ShiftMixARK, .-ShiftMixARK
+	.align	2
+	.globl	ShiftRowsARK
+	.type	ShiftRowsARK, @function
+ShiftRowsARK:
+	lui	a5,%hi(temp_block_ptr)
+	lw	a4,%lo(temp_block_ptr)(a5)
+	lw	a3,0(a0)
+	lui	a5,%hi(.LANCHOR1)
+	addi	a5,a5,%lo(.LANCHOR1)
+	sw	a3,0(a4)
+	lw	a3,4(a0)
+	sw	a3,4(a4)
+	lw	a3,8(a0)
+	sw	a3,8(a4)
+	lw	a3,12(a0)
+	sw	a3,12(a4)
+	lbu	a2,160(a5)
+	lbu	a4,0(a0)
+	lbu	a3,4(a0)
+	xor	a4,a4,a2
+	sb	a4,0(a0)
+	lbu	a2,161(a5)
+	lbu	a4,5(a5)
+	xor	a4,a4,a2
+	sb	a4,1(a0)
+	lbu	a2,162(a5)
+	lbu	a4,10(a5)
+	xor	a4,a4,a2
+	sb	a4,2(a0)
+	lbu	a2,163(a5)
+	lbu	a4,15(a5)
+	xor	a4,a4,a2
+	sb	a4,3(a0)
+	lbu	a2,164(a5)
+	lbu	a4,3(a5)
+	xor	a3,a3,a2
+	sb	a3,4(a0)
+	lbu	a2,165(a5)
+	lbu	a3,9(a5)
+	xor	a3,a3,a2
+	sb	a3,5(a0)
+	lbu	a2,166(a5)
+	lbu	a3,14(a5)
+	xor	a3,a3,a2
+	sb	a3,6(a0)
+	lbu	a3,167(a5)
+	xor	a4,a4,a3
+	sb	a4,7(a0)
+	lbu	a2,168(a5)
+	lbu	a3,8(a0)
+	lbu	a6,2(a5)
+	lbu	a4,7(a5)
+	xor	a3,a3,a2
+	sb	a3,8(a0)
+	lbu	a7,169(a5)
+	lbu	a3,13(a5)
+	lbu	a1,12(a0)
+	lbu	a2,1(a5)
+	xor	a3,a3,a7
+	sb	a3,9(a0)
+	lbu	a7,170(a5)
+	lbu	a3,6(a5)
+	xor	a6,a6,a7
+	sb	a6,10(a0)
+	lbu	a6,171(a5)
+	xor	a4,a4,a6
+	sb	a4,11(a0)
+	lbu	a6,172(a5)
+	lbu	a4,11(a5)
+	xor	a1,a1,a6
+	sb	a1,12(a0)
+	lbu	a1,173(a5)
+	xor	a2,a2,a1
+	sb	a2,13(a0)
+	lbu	a2,174(a5)
+	xor	a3,a3,a2
+	sb	a3,14(a0)
+	lbu	a5,175(a5)
+	xor	a5,a4,a5
+	sb	a5,15(a0)
+	ret
+	.size	ShiftRowsARK, .-ShiftRowsARK
+	.align	2
+	.globl	AddRoundKey
+	.type	AddRoundKey, @function
+AddRoundKey:
+	addi	a3,a0,16
+.L17:
+	lbu	a5,0(a0)
+	lbu	a4,0(a1)
+	addi	a0,a0,1
+	addi	a1,a1,1
+	xor	a5,a5,a4
+	sb	a5,-1(a0)
+	bne	a0,a3,.L17
+	ret
+	.size	AddRoundKey, .-AddRoundKey
+	.align	2
+	.globl	KeySchedule
+	.type	KeySchedule, @function
+KeySchedule:
+	lbu	a1,13(a0)
+	lbu	a2,14(a0)
+	lbu	a3,15(a0)
+	lbu	a5,12(a0)
+	lui	a4,%hi(.LANCHOR0)
+	addi	a4,a4,%lo(.LANCHOR0)
+	add	a1,a4,a1
+	add	a2,a4,a2
+	add	a3,a4,a3
+	add	a5,a4,a5
+	lbu	a6,0(a1)
+	lbu	a1,0(a2)
+	lbu	a2,0(a3)
+	lbu	a3,0(a5)
+	lui	a5,%hi(.LANCHOR1)
+	addi	a5,a5,%lo(.LANCHOR1)
+	sb	a6,16(a5)
+	sb	a1,17(a5)
+	sb	a2,18(a5)
+	sb	a3,19(a5)
+	lw	a3,0(a0)
+	lw	a2,16(a5)
+	lw	a1,4(a0)
+	lw	t3,8(a0)
+	xor	a2,a2,a3
+	xori	a2,a2,1
+	lw	a3,12(a0)
+	xor	a1,a2,a1
+	xor	a0,a1,t3
+	xor	a3,a0,a3
+	sw	a0,24(a5)
+	srli	a6,a3,8
+	srli	a0,a3,16
+	srli	t1,a3,24
+	andi	a7,a3,255
+	andi	a6,a6,0xff
+	andi	a0,a0,0xff
+	add	a6,a4,a6
+	add	a0,a4,a0
+	add	t1,a4,t1
+	add	a7,a4,a7
+	lbu	t5,0(a6)
+	lbu	t4,0(a0)
+	lbu	a6,0(t1)
+	lbu	a0,0(a7)
+	sb	t5,32(a5)
+	sb	t4,33(a5)
+	sb	a6,34(a5)
+	sb	a0,35(a5)
+	lw	a0,32(a5)
+	sw	a2,16(a5)
+	sw	a1,20(a5)
+	xor	a2,a2,a0
+	xori	a2,a2,2
+	xor	t3,t3,a2
+	xor	a0,a3,t3
+	srli	a7,a0,8
+	srli	a6,a0,16
+	xor	a1,a1,a2
+	srli	t4,a0,24
+	andi	t1,a0,255
+	andi	a7,a7,0xff
+	andi	a6,a6,0xff
+	add	a7,a4,a7
+	add	a6,a4,a6
+	add	t4,a4,t4
+	add	t1,a4,t1
+	sw	a3,28(a5)
+	sw	a1,36(a5)
+	sw	a2,32(a5)
+	sw	t3,40(a5)
+	lbu	t6,0(a7)
+	lbu	t5,0(a6)
+	lbu	a7,0(t4)
+	lbu	a6,0(t1)
+	sb	t6,48(a5)
+	sb	t5,49(a5)
+	sb	a7,50(a5)
+	sb	a6,51(a5)
+	sw	a0,44(a5)
+	lw	a0,48(a5)
+	xor	a2,a2,a0
+	xori	a2,a2,4
+	xor	a0,a1,a2
+	xor	a3,a3,a0
+	srli	a6,a3,8
+	srli	a1,a3,16
+	srli	t1,a3,24
+	andi	a7,a3,255
+	andi	a6,a6,0xff
+	andi	a1,a1,0xff
+	add	a6,a4,a6
+	add	a1,a4,a1
+	add	t1,a4,t1
+	add	a7,a4,a7
+	lbu	t5,0(a6)
+	lbu	t4,0(a1)
+	lbu	a6,0(t1)
+	lbu	a1,0(a7)
+	sb	t5,64(a5)
+	sb	t4,65(a5)
+	sb	a6,66(a5)
+	sb	a1,67(a5)
+	lw	a1,64(a5)
+	xor	t0,t3,a0
+	sw	a3,60(a5)
+	xor	a1,a2,a1
+	xori	a1,a1,8
+	xor	t3,t3,a1
+	xor	a6,a3,t3
+	srli	t1,a6,8
+	srli	a7,a6,16
+	andi	t1,t1,0xff
+	andi	a7,a7,0xff
+	add	t1,a4,t1
+	add	a7,a4,a7
+	srli	t4,a6,24
+	lbu	t6,0(t1)
+	lbu	t5,0(a7)
+	add	a7,a4,t4
+	lbu	t1,0(a7)
+	xor	t4,a0,a1
+	andi	a7,a6,255
+	sw	a0,52(a5)
+	sw	a2,48(a5)
+	sw	a1,64(a5)
+	add	a2,a4,a7
+	sw	t0,56(a5)
+	sw	t3,72(a5)
+	sw	t4,68(a5)
+	sw	a6,76(a5)
+	sb	t6,80(a5)
+	sb	t5,81(a5)
+	sb	t1,82(a5)
+	lbu	a2,0(a2)
+	sb	a2,83(a5)
+	lw	a2,80(a5)
+	xor	a1,a1,a2
+	xori	t1,a1,16
+	xor	a1,t4,t1
+	xor	a3,a3,a1
+	srli	a6,a3,8
+	srli	a0,a3,16
+	srli	a7,a3,24
+	andi	a2,a3,255
+	andi	a6,a6,0xff
+	andi	a0,a0,0xff
+	add	a6,a4,a6
+	add	a0,a4,a0
+	add	a7,a4,a7
+	add	a2,a4,a2
+	lbu	t4,0(a6)
+	lbu	a2,0(a2)
+	lbu	a6,0(a0)
+	lbu	a0,0(a7)
+	sb	a2,99(a5)
+	sb	a6,97(a5)
+	sb	a0,98(a5)
+	sb	t4,96(a5)
+	lw	t4,96(a5)
+	xor	t6,t3,a1
+	sw	a1,84(a5)
+	xor	t4,t1,t4
+	xori	t4,t4,32
+	xor	a2,t3,t4
+	xor	t5,a3,a2
+	srli	a6,t5,8
+	srli	a0,t5,16
+	srli	t3,t5,24
+	andi	a7,t5,255
+	andi	a6,a6,0xff
+	andi	a0,a0,0xff
+	add	a6,a4,a6
+	add	a0,a4,a0
+	add	t3,a4,t3
+	add	a7,a4,a7
+	lbu	t2,0(a6)
+	lbu	t0,0(a0)
+	lbu	a6,0(t3)
+	lbu	a0,0(a7)
+	sb	t2,112(a5)
+	sb	t0,113(a5)
+	sb	a6,114(a5)
+	sb	a0,115(a5)
+	lw	a0,112(a5)
+	xor	t0,a1,t4
+	sw	a3,92(a5)
+	xor	a0,t4,a0
+	xori	a0,a0,64
+	xor	a1,t0,a0
+	xor	a3,a3,a1
+	srli	a7,a3,8
+	srli	a6,a3,16
+	xor	t2,a2,a1
+	sw	t1,80(a5)
+	srli	t3,a3,24
+	andi	t1,a3,255
+	andi	a7,a7,0xff
+	andi	a6,a6,0xff
+	add	a7,a4,a7
+	add	a6,a4,a6
+	add	t3,a4,t3
+	add	t1,a4,t1
+	sw	t4,96(a5)
+	sw	a2,104(a5)
+	sw	t6,88(a5)
+	sw	t5,108(a5)
+	sw	a1,116(a5)
+	sw	a0,112(a5)
+	sw	t0,100(a5)
+	sw	t2,120(a5)
+	sw	a3,124(a5)
+	lbu	t5,0(a7)
+	lbu	t4,0(a6)
+	lbu	a7,0(t3)
+	lbu	a6,0(t1)
+	sb	t5,128(a5)
+	sb	t4,129(a5)
+	sb	a7,130(a5)
+	sb	a6,131(a5)
+	lw	a6,128(a5)
+	xor	a0,a0,a6
+	xori	a6,a0,128
+	xor	a2,a2,a6
+	xor	t3,a3,a2
+	srli	a7,t3,8
+	srli	a0,t3,16
+	andi	a7,a7,0xff
+	andi	a0,a0,0xff
+	srli	t4,t3,24
+	andi	t1,t3,255
+	add	a7,a4,a7
+	add	a0,a4,a0
+	add	t4,a4,t4
+	add	t1,a4,t1
+	lbu	t6,0(a7)
+	lbu	t5,0(a0)
+	lbu	a7,0(t4)
+	lbu	a0,0(t1)
+	sb	t6,144(a5)
+	sb	t5,145(a5)
+	sb	a7,146(a5)
+	sb	a0,147(a5)
+	lw	a0,144(a5)
+	xor	a1,a1,a6
+	sw	a1,132(a5)
+	xor	a0,a6,a0
+	xori	a0,a0,27
+	xor	a1,a1,a0
+	xor	a3,a3,a1
+	srli	t1,a3,8
+	srli	a7,a3,16
+	srli	t4,a3,24
+	andi	t1,t1,0xff
+	andi	a7,a7,0xff
+	add	t1,a4,t1
+	add	a7,a4,a7
+	add	t4,a4,t4
+	lbu	t5,0(t1)
+	lbu	t1,0(a7)
+	lbu	a7,0(t4)
+	andi	t6,a3,255
+	xor	t4,a2,a1
+	add	a4,a4,t6
+	sw	a2,136(a5)
+	sw	a3,156(a5)
+	sw	a1,148(a5)
+	sw	a6,128(a5)
+	sw	t3,140(a5)
+	sw	a0,144(a5)
+	sw	t4,152(a5)
+	sb	t5,160(a5)
+	sb	t1,161(a5)
+	sb	a7,162(a5)
+	lbu	a4,0(a4)
+	sb	a4,163(a5)
+	lw	a4,160(a5)
+	xor	a4,a0,a4
+	xori	a4,a4,54
+	xor	a2,a2,a4
+	xor	a3,a3,a2
+	xor	a1,a1,a4
+	sw	a3,172(a5)
+	sw	a2,168(a5)
+	sw	a1,164(a5)
+	sw	a4,160(a5)
+	ret
+	.size	KeySchedule, .-KeySchedule
+	.align	2
+	.globl	AES_Encrypt
+	.type	AES_Encrypt, @function
+AES_Encrypt:
+	addi	sp,sp,-32
+	sw	s3,12(sp)
+	mv	s3,a0
+	mv	a0,a1
+	sw	s0,24(sp)
+	sw	s2,16(sp)
+	mv	s0,a1
+	sw	ra,28(sp)
+	sw	s1,20(sp)
+	sw	s4,8(sp)
+	sw	s5,4(sp)
+	call	KeySchedule
+	mv	a1,s0
+	mv	s2,s3
+	addi	s0,s3,16
+	mv	a5,s3
+.L21:
+	lbu	a4,0(a5)
+	lbu	a3,0(a1)
+	addi	a5,a5,1
+	addi	a1,a1,1
+	xor	a4,a4,a3
+	sb	a4,-1(a5)
+	bne	a5,s0,.L21
+	lui	s5,%hi(.LANCHOR1)
+	addi	s5,s5,%lo(.LANCHOR1)
+	lui	s1,%hi(.LANCHOR0)
+	addi	s4,s5,16
+	addi	s1,s1,%lo(.LANCHOR0)
+	addi	s5,s5,160
+.L22:
+	mv	a5,s3
+.L23:
+	lbu	a4,0(a5)
+	addi	a5,a5,1
+	add	a4,s1,a4
+	lbu	a4,0(a4)
+	sb	a4,-1(a5)
+	bne	a5,s0,.L23
+	mv	a1,s4
+	mv	a0,s3
+	addi	s4,s4,16
+	call	ShiftMixARK
+	bne	s4,s5,.L22
+.L24:
+	lbu	a5,0(s2)
+	addi	s2,s2,1
+	add	a5,s1,a5
+	lbu	a5,0(a5)
+	sb	a5,-1(s2)
+	bne	s2,s0,.L24
+	lw	s0,24(sp)
+	lw	ra,28(sp)
+	lw	s1,20(sp)
+	lw	s2,16(sp)
+	lw	s4,8(sp)
+	lw	s5,4(sp)
+	mv	a0,s3
+	lw	s3,12(sp)
+	addi	sp,sp,32
+	tail	ShiftRowsARK
+	.size	AES_Encrypt, .-AES_Encrypt
+	.section	.text.startup,"ax",@progbits
+	.align	2
+	.globl	main
+	.type	main, @function
+main:
+	lui	a1,%hi(.LANCHOR2)
+	addi	a1,a1,%lo(.LANCHOR2)
+	addi	sp,sp,-16
+	addi	a0,a1,16
+	sw	ra,12(sp)
+	call	AES_Encrypt
+	lw	ra,12(sp)
+	li	a0,0
+	addi	sp,sp,16
+	jr	ra
