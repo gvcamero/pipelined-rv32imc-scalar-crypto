@@ -2,7 +2,7 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 20.09.2025 10:12:18
+// Create Date: 18.09.2025 13:50:08
 // Design Name: 
 // Module Name: tb_gfmul
 // Project Name: 
@@ -21,36 +21,20 @@
 `include "constants.vh"
 `include "config.vh"
 
-module tb_gfmul();
+module tb_gfmul_2();
 
     reg [7:0] in_byte;
-    reg [3:0] mltplr;
     wire [7:0] out_byte;
     
-    gfmul GFMUL(
+    gfmul_2 GFMUL_2(
         .in_byte(in_byte),
-        .mltplr(mltplr),
         .out_byte(out_byte)
     );
     
     initial begin
-        in_byte = 8'h24;
-        mltplr = 4'h2;
+        in_byte = 8'hAC;
         #10
-        in_byte = 8'h24;
-        mltplr = 4'h3;
-        #10
-        in_byte = 8'h24;
-        mltplr = 4'hE;
-        #10
-        in_byte = 8'h24;
-        mltplr = 4'hB;
-        #10
-        in_byte = 8'h24;
-        mltplr = 4'hD;
-        #10
-        in_byte = 8'h24;
-        mltplr = 4'h9;
+        in_byte = 8'h73;
         #10
         $finish;
     end

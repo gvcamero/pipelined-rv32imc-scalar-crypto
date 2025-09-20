@@ -2,9 +2,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 20.09.2025 10:12:18
+// Create Date: 20.09.2025 11:00:10
 // Design Name: 
-// Module Name: tb_gfmul
+// Module Name: tb_inv_mixcol
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -21,38 +21,22 @@
 `include "constants.vh"
 `include "config.vh"
 
-module tb_gfmul();
-
-    reg [7:0] in_byte;
-    reg [3:0] mltplr;
-    wire [7:0] out_byte;
+module tb_inv_mixcol();
     
-    gfmul GFMUL(
+    reg [7:0] in_byte;
+    wire [31:0] partial_mix;
+    
+    inv_mixcol INV_MIXCOL(
         .in_byte(in_byte),
-        .mltplr(mltplr),
-        .out_byte(out_byte)
+        .partial_mix(partial_mix)
     );
     
     initial begin
-        in_byte = 8'h24;
-        mltplr = 4'h2;
+        in_byte = 8'h56;
         #10
-        in_byte = 8'h24;
-        mltplr = 4'h3;
-        #10
-        in_byte = 8'h24;
-        mltplr = 4'hE;
-        #10
-        in_byte = 8'h24;
-        mltplr = 4'hB;
-        #10
-        in_byte = 8'h24;
-        mltplr = 4'hD;
-        #10
-        in_byte = 8'h24;
-        mltplr = 4'h9;
+        in_byte = 8'h9D;
         #10
         $finish;
     end
-
+    
 endmodule

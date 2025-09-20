@@ -2,9 +2,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 17.09.2025 15:50:56
+// Create Date: 17.09.2025 15:11:45
 // Design Name: 
-// Module Name: fwd_mixcol
+// Module Name: gfmul
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -21,19 +21,16 @@
 `include "constants.vh"
 `include "config.vh"
 
-module fwd_mixcol(
+module gfmul_2(
     input [7:0] in_byte,
-    output [31:0] partial_mix
+    output [7:0] out_byte
 );
 
-    wire [7:0] gftimes2; // GF(2^8) times 2 output
-    gfmul_2 GFMUL_2(
-        .in_byte(in_byte),
-        .out_byte(gftimes2)
-    );
+    /*wire [7:0] shifted = {in_byte[6:0], 1'b0};
+    wire [7:0] shifted_xor = shifted ^ 8'h1B;
     
-    wire [7:0] gftimes3 = gftimes2 ^ in_byte; // GF(2^8) times 3 output
+    assign out_byte = in_byte[7] ? shifted_xor : shifted;*/
     
-    assign partial_mix = {gftimes3, {2{in_byte}}, gftimes2};
+    assign out_byte = (in_byte << 1) ^ (in_byte[7] ? 8'h1B : 8'h00);
 
 endmodule

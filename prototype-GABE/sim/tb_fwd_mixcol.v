@@ -2,9 +2,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 20.09.2025 10:12:18
+// Create Date: 18.09.2025 16:24:33
 // Design Name: 
-// Module Name: tb_gfmul
+// Module Name: tb_fwd_mixcol
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -21,36 +21,20 @@
 `include "constants.vh"
 `include "config.vh"
 
-module tb_gfmul();
+module tb_fwd_mixcol();
 
     reg [7:0] in_byte;
-    reg [3:0] mltplr;
-    wire [7:0] out_byte;
+    wire [31:0] partial_mix;
     
-    gfmul GFMUL(
+    fwd_mixcol FWD_MIXCOL(
         .in_byte(in_byte),
-        .mltplr(mltplr),
-        .out_byte(out_byte)
+        .partial_mix(partial_mix)
     );
     
     initial begin
-        in_byte = 8'h24;
-        mltplr = 4'h2;
+        in_byte = 8'h3F;
         #10
-        in_byte = 8'h24;
-        mltplr = 4'h3;
-        #10
-        in_byte = 8'h24;
-        mltplr = 4'hE;
-        #10
-        in_byte = 8'h24;
-        mltplr = 4'hB;
-        #10
-        in_byte = 8'h24;
-        mltplr = 4'hD;
-        #10
-        in_byte = 8'h24;
-        mltplr = 4'h9;
+        in_byte = 8'hB1;
         #10
         $finish;
     end

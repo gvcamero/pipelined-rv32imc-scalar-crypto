@@ -2,7 +2,7 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 17.09.2025 15:11:45
+// Create Date: 19.09.2025 19:46:01
 // Design Name: 
 // Module Name: gfmul
 // Project Name: 
@@ -23,12 +23,32 @@
 
 module gfmul(
     input [7:0] in_byte,
+    input [3:0] mltplr,
     output [7:0] out_byte
 );
 
-    wire [7:0] shifted = {in_byte[6:0], 1'b0};
-    wire [7:0] shifted_xor = shifted ^ 8'h1B;
+    wire [7:0] gf2;
+    gfmul_2 GF2(
+        .in_byte(in_byte),
+        .out_byte(gf2)
+    );
     
-    assign out_byte = in_byte[7] ? shifted_xor : shifted;
-
+    wire [7:0] gf2_2;
+    gfmul_2 GF2_2(
+        .in_byte(gf2),
+        .out_byte(gf2_2)
+    );
+    
+    wire [7:0] gf2_2_2;
+    gfmul_2 GF2_2_2(
+        .in_byte(gf2_2),
+        .out_byte(gf2_2_2)
+    );
+    
+    assign out_byte = 
+        (mltplr[0] ? in_byte : 8'h00) ^
+        (mltplr[1] ? gf2 : 8'h00) ^
+        (mltplr[2] ? gf2_2 : 8'h00) ^
+        (mltplr[3] ? gf2_2_2 : 8'h00);
+    
 endmodule

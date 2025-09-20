@@ -98,20 +98,35 @@
 `define OPC_URET 7'h73
 
 // ALU opcodes
-`define ALU_ADD 4'd1
-`define ALU_SUB 4'd2
-`define ALU_AND 4'd3
-`define ALU_OR  4'd4
-`define ALU_XOR 4'd5
-`define ALU_SLT 4'd6
-`define ALU_SLTU 4'd7
-`define ALU_SLL 4'd8
-`define ALU_SRL 4'd9
-`define ALU_SRA 4'd10
-`define ALU_MUL 4'd11
-`define ALU_MULH 4'd12
-`define ALU_MULHSU 4'd13
-`define ALU_MULHU 4'd14
+`define ALU_ADD 5'd1
+`define ALU_SUB 5'd2
+`define ALU_AND 5'd3
+`define ALU_OR  5'd4
+`define ALU_XOR 5'd5
+`define ALU_SLT 5'd6
+`define ALU_SLTU 5'd7
+`define ALU_SLL 5'd8
+`define ALU_SRL 5'd9
+`define ALU_SRA 5'd10
+`define ALU_MUL 5'd11
+`define ALU_MULH 5'd12
+`define ALU_MULHSU 5'd13
+`define ALU_MULHU 5'd14
+// Bitmanip extension
+`define ALU_ROR 5'd15
+`define ALU_ROL 5'd16
+`define ALU_ANDN 5'd17
+`define ALU_ORN 5'd18
+`define ALU_XNOR 5'd19
+`define ALU_PACK 5'd20
+`define ALU_PACKH 5'd21
+`define ALU_BREV8 5'd22
+`define ALU_REV8 5'd23
+`define ALU_ZIP 5'd24
+`define ALU_UNZIP 5'd25
+// Carry-less mult extension
+`define ALU_CLMUL 5'd26
+`define ALU_CLMULH 5'd27
 
 `define DEFAULT_FILL 32'h01000100
 

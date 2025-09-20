@@ -45,6 +45,13 @@ module aes(
         .out_byte(fsbox_out)
     );
     
+    // rsbox
+    wire [7:0] rsbox_out; // rsbox output
+    rsbox RSBOX(
+        .in_byte(in_byte),
+        .out_byte(rsbox_out)
+    );
+    
     // fwd mixcolumns
     wire [31:0] fwd_mixcol_out; // mixcol output
     fwd_mixcol FWD_MIXCOL(
@@ -52,6 +59,28 @@ module aes(
         .partial_mix(fwd_mixcol_out)
     );
     
-    //
+    // inv mixcolumns
+    wire [31:0] inv_mixcol_out; // inv mixcol output
+    inv_mixcol INV_MIXCOL(
+        .in_byte(rsbox_out),
+        .partial_mix(inv_mixcol_out)
+    );
+    
+    // MUX
+    reg [31:0] selected; // multiplexer output
+    always@(*) begin
+        case({mode, is_mid})
+            2'b00: selected = {24'd0, fsbox_out}; // ENCRYPT FINAL ROUND
+            2'b01: selected = fwd_mixcol_out; // ENCRYPT MIDDLE ROUND
+            2'b10: selected = {24'd0, rsbox_out};// DECRYPT FINAL ROUND
+            2'b11: selected = inv_mixcol_out; // DECRYPT MIDDLE ROUND
+        endcase
+    end
+    
+    // rotate
+    wire [31:0] rotated = (selected << {bs, 3'b000}) | (selected >> (32 - {bs, 3'b000}));
+    
+    // output
+    assign res = rotated ^ op_a;
 
 endmodule
