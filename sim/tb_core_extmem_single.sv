@@ -21,10 +21,13 @@ module tb_core_extmem_single();
 	reg [`WORD_WIDTH-1:0] last_inst;
 	
     // localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/program_inst.hex");
-    localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/I-LW-01.mem");
+    //localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/mem/I-LW-01.mem");
+    localparam string temp_inst = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "instmem-dump/aes32dsmi_test_100.mem");
     // localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/program_data.hex");
-    localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/I-LW-01.mem");
-    localparam string temp_refm = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/mem/I-LW-01.mem");
+    //localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/mem/I-LW-01.mem");
+    //localparam string temp_refm = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/mem/I-LW-01.mem");
+    localparam string temp_data = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "datamem-dump/aes32dsmi_test_100.mem");
+    localparam string temp_refm = $sformatf("%s%s%s", `REPO_LOCATION, `TEST_LOCATION, "answer-keys/aes32dsmi_test_100.mem");
 
 	wire [3:0] dmem_data_write;
 	`ifdef FEATURE_BIT_ENABLE
@@ -263,7 +266,12 @@ module tb_core_extmem_single();
 	// Tracking how many clock cycles it takes to execute the program
 	always@(posedge CLK) begin
 		if(!nrst) clock_counter <= 0;
-		else if(!done) clock_counter <= clock_counter + 1;
+		else if(!done) begin
+		  clock_counter <= clock_counter + 1;
+		  //$display("Clock: %d", clock_counter);
+		  //$display("Current inst: 0x%X", INST);
+		  //$display("Check: %d", check);
+		end
 	end
 	
 	`ifdef SIM_BEHAV
@@ -418,11 +426,28 @@ module tb_core_extmem_single();
                 end
                 else begin
                 */
-                if (max_data_addr < core_data_addr[`DATAMEM_BITS-1:2])
-                    max_data_addr <= core_data_addr[`DATAMEM_BITS-1:2];
+                //if (max_data_addr < core_data_addr[`DATAMEM_BITS-1:2])
+                //    max_data_addr <= core_data_addr[`DATAMEM_BITS-1:2];
+                if (max_data_addr < core_data_addr)
+                    max_data_addr <= core_data_addr;
                 //end
             end
     end
+    
+    // Debug prints: show every data access and current max_data_addr
+    /*always @(posedge CLK) begin
+        if (!nrst) begin
+            // reset: nothing
+        end
+        else if (core_data_request) begin
+            $display("[%0t] DATA ACCESS: core_data_addr=0x%X (word index, byte=0x%X), max_data_addr=0x%X",
+                    $time,
+                    core_data_addr,
+                    {core_data_addr, 2'b00},  // convert to byte address
+                    max_data_addr);
+        end
+    end*/
+
 
 	// For simulating int_sig
 	// Test interrupts for the following conditions:
@@ -467,11 +492,12 @@ module tb_core_extmem_single();
 				//$display("0x%3X\t0x%X\t0x%X\tPass", con_addr, con_out, AK.memory[con_addr]);
 				pass = pass + 1;
 			end else begin
-				$display("0x%3X\t0x%X\t0x%X\tFail--------------------", con_addr, con_out, box);
+				$display("0x%X\t0x%X\t0x%X\tFail--------------------", con_addr, con_out, box);
 			end
 
 			total_test_cases = total_test_cases + 1;
 			if(con_addr == max_data_addr) print_metrics = 1;
+			//if(con_addr == 13'h0FFF) print_metrics = 1;
 			con_addr = con_addr + 1;
 		end
 	end
@@ -500,6 +526,7 @@ module tb_core_extmem_single();
 		if(check == 50) i = 50;
 		else i = 10;
 		$display("Passed %0d/%0d test cases.\nClock cycles: %0d", pass, total_test_cases, clock_counter-i);
+		//$display("max addr: 0x%X", max_data_addr);
 		`ifdef SIM_BEHAV
 		$display("Total cycles stalled: %0d", cumulative_stall_counter);
 		$display("Total cycles flushed: %0d", cumulative_flush_counter);
@@ -544,6 +571,10 @@ module tb_core_extmem_single();
 			$display("------");
 		end */	
 		`endif
+		
+		$writememh("datamem_out.mem", DATAMEM.COREMEM.ram_block);
+		//$display("a0: 0x%08X", CORE.RF.regfile[10]);
+		//$display("a1: 0x%08X", CORE.RF.regfile[11]);
 		$finish;
 	end
 	

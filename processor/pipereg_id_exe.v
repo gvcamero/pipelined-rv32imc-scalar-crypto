@@ -110,7 +110,18 @@ module pipereg_id_exe(
 	output reg [`REGFILE_BITS-1:0] exe_rs1,
 
 	input [`REGFILE_BITS-1:0] id_rs2,
-	output reg [`REGFILE_BITS-1:0] exe_rs2
+	output reg [`REGFILE_BITS-1:0] exe_rs2,
+	
+	// Extension signals
+	
+	// AES //////////////////////////////////////////
+	// Control signals                             //
+	input [1:0] id_AES_op,                         //
+	output reg [1:0] exe_AES_op,                   //
+	                                               //
+	input [1:0] id_AES_bs,                         //
+	output reg [1:0] exe_AES_bs                    //
+	/////////////////////////////////////////////////
 );
 
 	always@(posedge clk) begin
@@ -144,6 +155,11 @@ module pipereg_id_exe(
 			exe_is_comp <= 0;
 			exe_rs1 <= 5'd0;
 			exe_rs2 <= 5'd0;
+			
+			// Extension signals
+			// AES
+			exe_AES_op <= 2'd0;
+			exe_AES_bs <= 2'd0;
 		end else begin
 		    if(flush) begin
                 exe_pc4 <= 0;
@@ -175,6 +191,11 @@ module pipereg_id_exe(
                 exe_is_comp <= 0;
                 exe_rs1 <= 5'd0;
                 exe_rs2 <= 5'd0;
+                
+                // Extension signals
+                // AES
+			    exe_AES_op <= 2'd0;
+			    exe_AES_bs <= 2'd0;
 		    end else if (!stall) begin
                 exe_pc4 <= id_pc4;
                 exe_fwdopA <= id_fwdopA;
@@ -205,6 +226,11 @@ module pipereg_id_exe(
                 exe_is_comp <= id_is_comp;
                 exe_rs1 <= id_rs1;
                 exe_rs2 <= id_rs2;
+                
+                // Extension signals
+                // AES
+                exe_AES_op <= id_AES_op;
+                exe_AES_bs <= id_AES_bs;
             end
             else begin
                 exe_pc4 <= exe_pc4;
@@ -236,6 +262,11 @@ module pipereg_id_exe(
                 exe_is_comp <= exe_is_comp;
                 exe_rs1 <= exe_rs1;
                 exe_rs2 <= exe_rs2;
+                
+                // Extension signals
+                // AES
+                exe_AES_op <= exe_AES_op;
+                exe_AES_bs <= exe_AES_bs;
             end
 		end
 	end

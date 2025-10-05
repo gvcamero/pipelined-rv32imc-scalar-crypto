@@ -48,7 +48,12 @@ module pipereg_mem_wb(
 	output reg wb_wr_en,
 
 	input [2:0] mem_sel_data,
-	output reg [2:0] wb_sel_data
+	output reg [2:0] wb_sel_data,
+	
+	// Extension signals
+	// AES
+	input [`WORD_WIDTH-1:0] mem_AESout,
+	output reg [`WORD_WIDTH-1:0] wb_AESout
 );
 
 	always@(posedge clk) begin
@@ -63,6 +68,10 @@ module pipereg_mem_wb(
 			// Control signals
 			wb_wr_en <= 0;
 			wb_sel_data <= 0;
+			
+			// Extension signals
+			// AES
+			wb_AESout <= 0;
 		end else begin
 		     if(flush) begin
                 wb_pc4 <= 0;
@@ -75,6 +84,10 @@ module pipereg_mem_wb(
                 // Control signals
                 wb_wr_en <= 0;
                 wb_sel_data <= 0;
+                
+                // Extension signals
+                // AES
+                wb_AESout <= 0;
 		    end else if (!stall) begin
                 wb_pc4 <= mem_pc4;
                 wb_ALUout <= mem_ALUout;
@@ -86,6 +99,10 @@ module pipereg_mem_wb(
                 // Control signals
                 wb_wr_en <= mem_wr_en;
                 wb_sel_data <= mem_sel_data;
+                
+                // Extension signals
+                // AES
+                wb_AESout <= mem_AESout;
             end else begin
                 wb_pc4 <= wb_pc4;
                 wb_ALUout <= wb_ALUout;
@@ -97,6 +114,10 @@ module pipereg_mem_wb(
                 // Control signals
                 wb_wr_en <= wb_wr_en;
                 wb_sel_data <= wb_sel_data;
+                
+                // Extension signals
+                // AES
+                wb_AESout <= wb_AESout;
             end
 		end
 	end

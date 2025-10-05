@@ -131,6 +131,10 @@ module core_extmem (
 	wire [2:0] id_sel_data;								// For WB stage 		//
 	wire [1:0] id_store_select;							// For EXE stage 		//
 	wire id_sel_opBR;									// For ID stage 		//
+	// For extensions ////////////////////////////////////////////////////////////
+	// AES ///////////////////////////////////////////////////////////////////////
+	wire [1:0] id_AES_op;                               // For EXE stage        //
+	wire [1:0] id_AES_bs;                               // For EXE stage        //
 	//////////////////////////////////////////////////////////////////////////////
 
 	// Inputs to ID/EXE Pipereg 														
@@ -196,11 +200,17 @@ module core_extmem (
 	wire [2:0] exe_sel_data;				// For WB stage
 	wire [1:0] exe_store_select;			// For EXE stage
 	wire exe_sel_opBR;						// For EXE stage
+	// Extension signals
+	// AES control signals
+	wire [1:0] exe_AES_op;                  // For EXE stage AES unit
+	wire [1:0] exe_AES_bs;                  // For EXE stage AES unit
 
 	// Inputs to EXE/MEM Pipereg
 	wire [`WORD_WIDTH-1:0] exe_ALUout;		// ALU output
 	wire [`WORD_WIDTH-1:0] exe_DIVout;		// Divider output
 	wire [`WORD_WIDTH-1:0] exe_storedata;	// Output of STORE BLOCK
+	// Extensions
+	wire [`WORD_WIDTH-1:0] exe_AESout;      // AES output
 // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 
@@ -231,6 +241,10 @@ module core_extmem (
 
 	// Inputs to MEM/WB Pipereg
 	wire [`WORD_WIDTH-1:0] mem_loaddata;	// Output of LOAD BLOCK
+	
+	// Extensions
+	// AES
+	wire [`WORD_WIDTH-1:0] mem_AESout;      // AES output
 // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 
@@ -252,6 +266,10 @@ module core_extmem (
 
 	// Datapath signals
 	wire [`WORD_WIDTH-1:0] wb_wr_data;
+	
+	// Extension signals
+	// AES
+	wire [`WORD_WIDTH-1:0] wb_AESout;       // AES output
 // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 
@@ -695,12 +713,14 @@ module core_extmem (
 							(exe_sel_data == 3'd4)? exe_DIVout		:
 							(exe_sel_data == 3'd2)? exe_imm			: 
 							(exe_sel_data == 3'd1)? exe_ALUout		:
+							(exe_sel_data == 3'd5)? exe_AESout		:
 													exe_pc4			:												 
 					   fw_mem_to_id_A?
 					   		(mem_sel_data == 3'd4)? mem_DIVout		:
 					   		(mem_sel_data == 3'd3)? mem_loaddata	:
 					   		(mem_sel_data == 3'd2)? mem_imm			:
 					   		(mem_sel_data == 3'd1)? mem_ALUout		:
+					   		(mem_sel_data == 3'd5)? mem_AESout		:
 					   								mem_pc4			:
 					   fw_wb_to_id_A?
 					   		wb_wr_data								:
@@ -712,12 +732,14 @@ module core_extmem (
 							(exe_sel_data == 3'd4)? exe_DIVout		:             
 							(exe_sel_data == 3'd2)? exe_imm			: 
 							(exe_sel_data == 3'd1)? exe_ALUout 		:
+							(exe_sel_data == 3'd5)? exe_AESout 		:
 													exe_pc4			:
 					   (fw_mem_to_id_B && !id_is_stype)?
 					   		(mem_sel_data == 3'd4)? mem_DIVout		:
 					   		(mem_sel_data == 3'd3)? mem_loaddata	:
 					   		(mem_sel_data == 3'd2)? mem_imm			:
 					   		(mem_sel_data == 3'd1)? mem_ALUout		:
+					   		(mem_sel_data == 3'd5)? mem_AESout		:
 					   								mem_pc4			:
 					   (fw_wb_to_id_B && !id_is_stype)?
 					   		wb_wr_data								:                 
@@ -729,12 +751,14 @@ module core_extmem (
 							(exe_sel_data == 3'd4)? exe_DIVout		:
 							(exe_sel_data == 3'd2)? exe_imm			: 
 							(exe_sel_data == 3'd1)? exe_ALUout 		:
+							(exe_sel_data == 3'd5)? exe_AESout 		:
 													exe_pc4			:
 						 (fw_mem_to_id_B && id_is_stype)?
 						 	(mem_sel_data == 3'd4)? mem_DIVout 		:
 						 	(mem_sel_data == 3'd3)? mem_loaddata	:
 						 	(mem_sel_data == 3'd2)? mem_imm			:
 						 	(mem_sel_data == 3'd1)? mem_ALUout		:
+						 	(mem_sel_data == 3'd5)? mem_AESout		:
 						 							mem_pc4			:
 						 (fw_wb_to_id_B && id_is_stype)?
 						 	wb_wr_data : id_rfoutB;
@@ -763,7 +787,12 @@ module core_extmem (
 		.sel_pc(id_base_sel_pc),
 		.sel_data(id_base_sel_data),
 		.store_select(id_base_store_select),
-		.sel_opBR(id_base_sel_opBR)
+		.sel_opBR(id_base_sel_opBR),
+		
+		// outputs for extensions
+		
+		.AES_op(id_AES_op), // NOTE: create these signals
+		.AES_bs(id_AES_bs)
 	);
 
 	regfile RF(
@@ -882,7 +911,10 @@ module core_extmem (
 		.id_comp_use_B(id_c_use_B),			.exe_comp_use_B(exe_comp_use_B),
 		.id_is_comp(id_is_comp),			.exe_is_comp(exe_is_comp),
 		.id_rs1(id_rsA),					.exe_rs1(exe_rsA),
-		.id_rs2(id_rsB),					.exe_rs2(exe_rsB)
+		.id_rs2(id_rsB),					.exe_rs2(exe_rsB),
+		// AES control signals
+		.id_AES_op(id_AES_op),              .exe_AES_op(exe_AES_op),
+		.id_AES_bs(id_AES_bs),              .exe_AES_bs(exe_AES_bs)
 	);
 
 
@@ -970,6 +1002,16 @@ module core_extmem (
 		.exe_PBT(exe_PBT),
 		.exe_CNI(exe_CNI)
 	);
+	
+	// AES Unit
+	aes AES(
+	   .op_a(opA),
+	   .op_b(opB),
+	   .bs(exe_AES_bs),
+	   .is_mid(exe_AES_op[0]),
+	   .mode(exe_AES_op[1]),
+	   .res(exe_AESout)
+	);
 
 	
 	pipereg_exe_mem EXE_MEM(
@@ -993,7 +1035,11 @@ module core_extmem (
 		// .exe_dm_write(exe_dm_write),		.mem_dm_write(mem_dm_write),
 		.exe_wr_en(exe_wr_en),				.mem_wr_en(mem_wr_en),
 		.exe_dm_select(exe_dm_select),		.mem_dm_select(mem_dm_select),
-		.exe_sel_data(exe_sel_data),		.mem_sel_data(mem_sel_data)
+		.exe_sel_data(exe_sel_data),		.mem_sel_data(mem_sel_data),
+		
+		// Extensions
+		// AES
+		.exe_AESout(exe_AESout),            .mem_AESout(mem_AESout)
 	);
 
 
@@ -1067,7 +1113,11 @@ module core_extmem (
 
 		// Control signals
 		.mem_wr_en(mem_wr_en),				.wb_wr_en(wb_wr_en),
-		.mem_sel_data(mem_sel_data),		.wb_sel_data(wb_sel_data)
+		.mem_sel_data(mem_sel_data),		.wb_sel_data(wb_sel_data),
+		
+		// Extension signals
+		// AES
+		.mem_AESout(mem_AESout),            .wb_AESout(wb_AESout)
 	);
 
 
@@ -1078,5 +1128,6 @@ module core_extmem (
 						(wb_sel_data == 3'd1) ? wb_ALUout : 
 						(wb_sel_data == 3'd2) ? wb_imm :
 						(wb_sel_data == 3'd4) ? wb_DIVout :
+						(wb_sel_data == 3'd5) ? wb_AESout :
 						wb_loaddata;
 endmodule

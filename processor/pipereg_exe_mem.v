@@ -63,7 +63,14 @@ module pipereg_exe_mem(
 	output reg [2:0] mem_dm_select,
 
 	input [2:0] exe_sel_data,
-	output reg [2:0] mem_sel_data
+	output reg [2:0] mem_sel_data,
+	
+	// Extension signals
+	
+	// AES //////////////////////////////////////////
+	input [`WORD_WIDTH-1:0] exe_AESout,            //
+	output reg [`WORD_WIDTH-1:0] mem_AESout        //
+	/////////////////////////////////////////////////
 );
 	
 	always@(posedge clk) begin
@@ -83,6 +90,10 @@ module pipereg_exe_mem(
 			mem_wr_en <= 0;
 			mem_dm_select <= 0;
 			mem_sel_data <= 0;
+			
+			// Extension signals
+			//AES
+			mem_AESout <= 0;
 		end
 		else begin
 		    if(flush) begin
@@ -101,6 +112,10 @@ module pipereg_exe_mem(
                 mem_wr_en <= 0;
                 mem_dm_select <= 0;
                 mem_sel_data <= 0;
+                
+                // Extension signals
+                // AES
+                mem_AESout <= 0;
             end else if (!stall) begin
                 mem_pc4 <= exe_pc4;
                 mem_ALUout <= exe_ALUout;
@@ -117,6 +132,10 @@ module pipereg_exe_mem(
                 mem_wr_en <= exe_wr_en;
                 mem_dm_select <= exe_dm_select;
                 mem_sel_data <= exe_sel_data;
+                
+                // Extension signals
+                // AES
+                mem_AESout <= exe_AESout;
             end
             else begin
                 mem_pc4 <= mem_pc4;
@@ -134,6 +153,10 @@ module pipereg_exe_mem(
                 mem_wr_en <= mem_wr_en;
                 mem_dm_select <= mem_dm_select;
                 mem_sel_data <= mem_sel_data;
+                
+                // Extension signals
+                // AES
+                mem_AESout <= mem_AESout;
             end
 		end
 	end

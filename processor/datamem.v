@@ -129,7 +129,7 @@ module datamem (
 		.clkB(clk),
 		.enaB(1'b1),
 		.weB(4'b0),
-		.addrB(con_addr[`DATAMEM_BITS-2:0]),
+		.addrB(con_addr[`DATAMEM_BITS-1:0]),
 		.dinB(32'b0),
 		.doutB(coremem_doutb)
 	);

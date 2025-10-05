@@ -41,7 +41,14 @@ module controller1(
     output sel_pc,				// Input to PC selection MUX
     output [2:0] sel_data,      // Input to WB data selection MUX
     output [1:0] store_select,  // Input to STOREBLOCK
-    output sel_opBR             // Input to Branch target computation MUX
+    output sel_opBR,             // Input to Branch target computation MUX
+    
+    // Outputs for extensions
+    
+    // Inputs to AES
+    output [1:0] AES_op,        // AES operation selector
+    output [1:0] AES_bs         // byte selector
+    
 );
     
     ///////////////////////////////////////////////////////////////////////
@@ -95,6 +102,7 @@ module controller1(
 					  (opcode == `OPC_LUI) ? 3'h2 : 
 					  (opcode == `OPC_LOAD) ? 3'h3 :
 					  (opcode == `OPC_RTYPE && funct7 == 7'h1 && funct3[2] == 1)? 3'h4 :
+					  (opcode == `OPC_RTYPE && ({funct7[4:3], funct7[0]} == 3'b101) && funct3 == 3'b000) ? 3'h5 :
 					  3'h1;
     //sel_data
     // 0 if J-type inst (select PC+4)
@@ -102,6 +110,7 @@ module controller1(
     // 2 if LUI (select Immediate)
     // 3 if I-type inst [load] (select Loaddata)
     // 4 if DIV[U]/REM[U] (select DIVout)
+    // 5 if AES (select AESout)
 
     assign store_select = (opcode == `OPC_STYPE && funct3 == 3'h0) ? 2'h0 : 
     					  (opcode == `OPC_STYPE && funct3 == 3'h1) ? 2'h1 : 2'h2; 
@@ -154,5 +163,9 @@ module controller1(
     // assert if the instruction is DIV[U]/REM[U]
 
     assign sel_opBR = (opcode == `OPC_JALR)? 1'h1 : 1'h0;   // if jalr, select rfoutA, else select PC
+    
+    // AES
+    assign AES_op = funct7[2:1];
+    assign AES_bs = funct7[6:5];
     
 endmodule
