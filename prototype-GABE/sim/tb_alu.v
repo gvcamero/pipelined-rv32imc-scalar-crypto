@@ -65,15 +65,15 @@ module tb_alu();
         
         #10
         
-        op_a = 32'hFF;
-        op_b = 32'h0E;
-        ALU_op = `ALU_CLMUL;
+        op_a = 32'hAEC19725;
+        //op_b = 32'h0E;
+        ALU_op = `ALU_ZIP;
         
         #20
         
         op_a = 32'hFF;
-        op_b = 32'h0E;
-        ALU_op = `ALU_CLMULH;
+        //op_b = 32'h0E;
+        ALU_op = `ALU_ZIP;
         
         #20
         

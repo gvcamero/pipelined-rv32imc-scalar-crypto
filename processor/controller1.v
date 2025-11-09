@@ -24,8 +24,9 @@ module controller1(
     input [6:0] opcode,
     input [2:0] funct3,
     input [6:0] funct7,
+    input [4:0] bits_24_20,
 
-    output [3:0] ALU_op,        // Input to ALU
+    output [4:0] ALU_op,        // Input to ALU
     output div_valid,			// Input to Divider unit (based on tvalid input of Divider IP Module)
     output [1:0] div_op,		// Input to Divider unit
     output sel_opA,             // Input to opA selection mux
@@ -47,7 +48,10 @@ module controller1(
     
     // Inputs to AES
     output [1:0] AES_op,        // AES operation selector
-    output [1:0] AES_bs         // byte selector
+    output [1:0] AES_bs,        // byte selector
+    
+    // Inputs to SHA
+    output [1:0] SHA_op         // SHA operation selector
     
 );
     
@@ -103,6 +107,7 @@ module controller1(
 					  (opcode == `OPC_LOAD) ? 3'h3 :
 					  (opcode == `OPC_RTYPE && funct7 == 7'h1 && funct3[2] == 1)? 3'h4 :
 					  (opcode == `OPC_RTYPE && ({funct7[4:3], funct7[0]} == 3'b101) && funct3 == 3'b000) ? 3'h5 :
+					  (opcode == `OPC_ITYPE && funct3 == 3'h1 && funct7 == 7'h8) ? 3'h6 :
 					  3'h1;
     //sel_data
     // 0 if J-type inst (select PC+4)
@@ -111,6 +116,7 @@ module controller1(
     // 3 if I-type inst [load] (select Loaddata)
     // 4 if DIV[U]/REM[U] (select DIVout)
     // 5 if AES (select AESout)
+    // 6 if SHA (select SHAout)
 
     assign store_select = (opcode == `OPC_STYPE && funct3 == 3'h0) ? 2'h0 : 
     					  (opcode == `OPC_STYPE && funct3 == 3'h1) ? 2'h1 : 2'h2; 
@@ -120,12 +126,7 @@ module controller1(
     // 2 if SW
 
     assign ALU_op = (opcode == `OPC_RTYPE && funct3 == 3'h0 && funct7 == 7'h20)?								`ALU_SUB	: 
-                    (funct3 == 3'h7 && (opcode == `OPC_RTYPE || opcode == `OPC_ITYPE))? 						`ALU_AND	: 
-                    (funct3 == 3'h6 && (opcode == `OPC_RTYPE || opcode == `OPC_ITYPE))? 						`ALU_OR		: 
-                    (funct3 == 3'h4 && (opcode == `OPC_RTYPE || opcode == `OPC_ITYPE))? 						`ALU_XOR	: 
-                    (funct3 == 3'h2 && ((opcode == `OPC_RTYPE && funct7 == 7'h0) || (opcode == `OPC_ITYPE)))? 	`ALU_SLT	: 
-                    (funct3 == 3'h3 && ((opcode == `OPC_RTYPE && funct7 == 7'h0) || (opcode == `OPC_ITYPE)))? 	`ALU_SLTU	: 
-                    (funct3 == 3'h1 && ((opcode == `OPC_RTYPE && funct7 == 7'h0) || (opcode == `OPC_ITYPE)))? 	`ALU_SLL	:
+                    // moved conditions here to the bottom
                     (funct3 == 3'h5 && funct7 == 7'h0 && (opcode == `OPC_RTYPE || opcode == `OPC_ITYPE))? 		`ALU_SRL	:  
                     (funct3 == 3'h5 && funct7 == 7'h20 && (opcode == `OPC_RTYPE || opcode == `OPC_ITYPE))? 		`ALU_SRA	:
 
@@ -133,7 +134,29 @@ module controller1(
                     (funct3 == 3'h1 && funct7 == 7'h1 && opcode == `OPC_RTYPE)? `ALU_MULH	:
                     (funct3 == 3'h2 && funct7 == 7'h1 && opcode == `OPC_RTYPE)? `ALU_MULHSU	:
                     (funct3 == 3'h3 && funct7 == 7'h1 && opcode == `OPC_RTYPE)? `ALU_MULHU	:
-                    4'h1;
+                    
+                    (funct3 == 3'h5 && funct7 == 7'h30 && (opcode == `OPC_RTYPE || opcode == `OPC_ITYPE))? `ALU_ROR    :
+                    (funct3 == 3'h1 && funct7 == 7'h30 && opcode == `OPC_RTYPE)?                           `ALU_ROL    :
+                    (funct3 == 3'h7 && funct7 == 7'h20 && opcode == `OPC_RTYPE)?                           `ALU_ANDN   :
+                    (funct3 == 3'h6 && funct7 == 7'h20 && opcode == `OPC_RTYPE)?                           `ALU_ORN    :
+                    (funct3 == 3'h4 && funct7 == 7'h20 && opcode == `OPC_RTYPE)?                           `ALU_XNOR   :
+                    (funct3 == 3'h4 && funct7 == 7'h4 && opcode == `OPC_RTYPE)?                            `ALU_PACK   :
+                    (funct3 == 3'h7 && funct7 == 7'h4 && opcode == `OPC_RTYPE)?                            `ALU_PACKH  :
+                    (funct3 == 3'h5 && funct7 == 7'h34 && bits_24_20 == 5'b00111 && opcode == `OPC_ITYPE)? `ALU_BREV8  :
+                    (funct3 == 3'h5 && funct7 == 7'h34 && bits_24_20 == 5'b11000 && opcode == `OPC_ITYPE)? `ALU_REV8   :
+                    (funct3 == 3'h1 && funct7 == 7'h4 && bits_24_20 == 5'b01111 && opcode == `OPC_ITYPE)?  `ALU_ZIP    :
+                    (funct3 == 3'h5 && funct7 == 7'h4 && bits_24_20 == 5'b01111 && opcode == `OPC_ITYPE)?  `ALU_UNZIP  :
+                    (funct3 == 3'h1 && funct7 == 7'h5 && opcode == `OPC_RTYPE)?                            `ALU_CLMUL  :
+                    (funct3 == 3'h3 && funct7 == 7'h5 && opcode == `OPC_RTYPE)?                            `ALU_CLMULH :
+                    
+                    // moved conditions
+                    (funct3 == 3'h7 && ((opcode == `OPC_RTYPE && funct7 == 7'h0) || opcode == `OPC_ITYPE))? 	`ALU_AND	: 
+                    (funct3 == 3'h6 && ((opcode == `OPC_RTYPE && funct7 == 7'h0) || opcode == `OPC_ITYPE))? 	`ALU_OR		: 
+                    (funct3 == 3'h4 && ((opcode == `OPC_RTYPE && funct7 == 7'h0) || opcode == `OPC_ITYPE))? 	`ALU_XOR	: 
+                    (funct3 == 3'h2 && ((opcode == `OPC_RTYPE && funct7 == 7'h0) || (opcode == `OPC_ITYPE)))? 	`ALU_SLT	: 
+                    (funct3 == 3'h3 && ((opcode == `OPC_RTYPE && funct7 == 7'h0) || (opcode == `OPC_ITYPE)))? 	`ALU_SLTU	: 
+                    (funct3 == 3'h1 && ((opcode == `OPC_RTYPE && funct7 == 7'h0) || (opcode == `OPC_ITYPE)))? 	`ALU_SLL	:
+                    5'h1;
     //ALU_op
     // 1 if ADD (R-type), ADDI (I-type), I-type [load], S-type
     // 2 if SUB (R-type)
@@ -167,5 +190,8 @@ module controller1(
     // AES
     assign AES_op = funct7[2:1];
     assign AES_bs = funct7[6:5];
+    
+    // SHA
+    assign SHA_op = bits_24_20[1:0];
     
 endmodule

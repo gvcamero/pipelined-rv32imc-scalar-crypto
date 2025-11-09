@@ -40,10 +40,12 @@ module regfile(
 	
 	// Write regfile
 	always@(posedge clk)
-		if(!nrst)
+		if(!nrst) begin
 			for(i = 0; i < `REGFILE_SIZE; i = i + 1)
 				regfile[i]	<=	0;
-		else
+			// Initialize sp
+			regfile[2] <= 32'h00000FFC;
+		end else
 			if(wr_en && (dest_addr != 5'd0))
 				regfile[dest_addr]	<= wr_data;
 endmodule

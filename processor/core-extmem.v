@@ -109,14 +109,16 @@ module core_extmem (
 	wire [6:0] id_opcode;					// opcode
 	wire [2:0] id_funct3;					// funct3
 	wire [6:0] id_funct7;					// funct7
+	wire [4:0] id_bits_24_20;               // inst[24:20]
 	wire [`REGFILE_BITS-1:0] id_rsA; 		// source register B
 	wire [`REGFILE_BITS-1:0] id_rsB;		// source register A
 	wire [`REGFILE_BITS-1:0] id_rd;			// destination register
 	assign id_funct3 = id_inst[14:12];
 	assign id_funct7 = id_inst[31:25];
+	assign id_bits_24_20 = id_inst[24:20];
 
 	// Control signals ///////////////////////////////////////////////////////////
-	wire [3:0] id_ALU_op;								// For EXE stage 		//
+	wire [4:0] id_ALU_op;								// For EXE stage 		//
 	wire id_div_valid;									// For EXE stage 		//
 	wire [1:0] id_div_op;								// For EXE stage 		//
 	wire id_sel_opA, id_sel_opB;						// For EXE stage 		//
@@ -135,6 +137,8 @@ module core_extmem (
 	// AES ///////////////////////////////////////////////////////////////////////
 	wire [1:0] id_AES_op;                               // For EXE stage        //
 	wire [1:0] id_AES_bs;                               // For EXE stage        //
+	// SHA ///////////////////////////////////////////////////////////////////////
+	wire [1:0] id_SHA_op;                               // For EXE stage        //
 	//////////////////////////////////////////////////////////////////////////////
 
 	// Inputs to ID/EXE Pipereg 														
@@ -186,7 +190,7 @@ module core_extmem (
 	assign exe_btype[0] = (exe_opcode == `OPC_BTYPE)? ( (exe_funct3 == 3'h7)? 1'b1 : 1'b0) : 1'b0;	// BGEU
 
 	// Control signals
-	wire [3:0] exe_ALU_op;					// For EXE stage
+	wire [4:0] exe_ALU_op;					// For EXE stage
 	wire exe_div_valid;						// For EXE stage
 	wire [1:0] exe_div_op;					// For EXE stage
 	wire exe_is_stype;						// For EXE stage
@@ -204,13 +208,18 @@ module core_extmem (
 	// AES control signals
 	wire [1:0] exe_AES_op;                  // For EXE stage AES unit
 	wire [1:0] exe_AES_bs;                  // For EXE stage AES unit
+	// SHA control signals
+	wire [1:0] exe_SHA_op;                  // For EXE stage SHA unit
 
 	// Inputs to EXE/MEM Pipereg
 	wire [`WORD_WIDTH-1:0] exe_ALUout;		// ALU output
 	wire [`WORD_WIDTH-1:0] exe_DIVout;		// Divider output
 	wire [`WORD_WIDTH-1:0] exe_storedata;	// Output of STORE BLOCK
 	// Extensions
+	// AES
 	wire [`WORD_WIDTH-1:0] exe_AESout;      // AES output
+	// SHA
+	wire [`WORD_WIDTH-1:0] exe_SHAout;      // SHA output
 // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 
@@ -245,6 +254,8 @@ module core_extmem (
 	// Extensions
 	// AES
 	wire [`WORD_WIDTH-1:0] mem_AESout;      // AES output
+	// SHA
+	wire [`WORD_WIDTH-1:0] mem_SHAout;      // SHA output
 // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 
@@ -270,6 +281,8 @@ module core_extmem (
 	// Extension signals
 	// AES
 	wire [`WORD_WIDTH-1:0] wb_AESout;       // AES output
+	// SHA
+	wire [`WORD_WIDTH-1:0] wb_SHAout;       // SHA output
 // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 
@@ -346,7 +359,7 @@ module core_extmem (
     wire [2:0] id_base_imm_select;
     wire [2:0] id_base_sel_data;
     wire [1:0] id_base_store_select;
-    wire [3:0] id_base_ALU_op;
+    wire [4:0] id_base_ALU_op;
     wire id_base_sel_opA;
     wire id_base_sel_opB;
     wire id_base_is_stype;
@@ -714,6 +727,7 @@ module core_extmem (
 							(exe_sel_data == 3'd2)? exe_imm			: 
 							(exe_sel_data == 3'd1)? exe_ALUout		:
 							(exe_sel_data == 3'd5)? exe_AESout		:
+							(exe_sel_data == 3'd6)? exe_SHAout		:
 													exe_pc4			:												 
 					   fw_mem_to_id_A?
 					   		(mem_sel_data == 3'd4)? mem_DIVout		:
@@ -721,6 +735,7 @@ module core_extmem (
 					   		(mem_sel_data == 3'd2)? mem_imm			:
 					   		(mem_sel_data == 3'd1)? mem_ALUout		:
 					   		(mem_sel_data == 3'd5)? mem_AESout		:
+					   		(mem_sel_data == 3'd6)? mem_SHAout		:
 					   								mem_pc4			:
 					   fw_wb_to_id_A?
 					   		wb_wr_data								:
@@ -733,6 +748,7 @@ module core_extmem (
 							(exe_sel_data == 3'd2)? exe_imm			: 
 							(exe_sel_data == 3'd1)? exe_ALUout 		:
 							(exe_sel_data == 3'd5)? exe_AESout 		:
+							(exe_sel_data == 3'd6)? exe_SHAout 		:
 													exe_pc4			:
 					   (fw_mem_to_id_B && !id_is_stype)?
 					   		(mem_sel_data == 3'd4)? mem_DIVout		:
@@ -740,6 +756,7 @@ module core_extmem (
 					   		(mem_sel_data == 3'd2)? mem_imm			:
 					   		(mem_sel_data == 3'd1)? mem_ALUout		:
 					   		(mem_sel_data == 3'd5)? mem_AESout		:
+					   		(mem_sel_data == 3'd6)? mem_SHAout		:
 					   								mem_pc4			:
 					   (fw_wb_to_id_B && !id_is_stype)?
 					   		wb_wr_data								:                 
@@ -752,6 +769,7 @@ module core_extmem (
 							(exe_sel_data == 3'd2)? exe_imm			: 
 							(exe_sel_data == 3'd1)? exe_ALUout 		:
 							(exe_sel_data == 3'd5)? exe_AESout 		:
+							(exe_sel_data == 3'd6)? exe_SHAout 		:
 													exe_pc4			:
 						 (fw_mem_to_id_B && id_is_stype)?
 						 	(mem_sel_data == 3'd4)? mem_DIVout 		:
@@ -759,6 +777,7 @@ module core_extmem (
 						 	(mem_sel_data == 3'd2)? mem_imm			:
 						 	(mem_sel_data == 3'd1)? mem_ALUout		:
 						 	(mem_sel_data == 3'd5)? mem_AESout		:
+						 	(mem_sel_data == 3'd6)? mem_SHAout		:
 						 							mem_pc4			:
 						 (fw_wb_to_id_B && id_is_stype)?
 						 	wb_wr_data : id_rfoutB;
@@ -769,6 +788,7 @@ module core_extmem (
 		.opcode(id_opcode),
 		.funct3(id_funct3),
 		.funct7(id_funct7),
+		.bits_24_20(id_bits_24_20),
 
 		// Outputs
 		.ALU_op(id_base_ALU_op),
@@ -792,7 +812,9 @@ module core_extmem (
 		// outputs for extensions
 		
 		.AES_op(id_AES_op), // NOTE: create these signals
-		.AES_bs(id_AES_bs)
+		.AES_bs(id_AES_bs),
+		
+		.SHA_op(id_SHA_op)
 	);
 
 	regfile RF(
@@ -914,7 +936,9 @@ module core_extmem (
 		.id_rs2(id_rsB),					.exe_rs2(exe_rsB),
 		// AES control signals
 		.id_AES_op(id_AES_op),              .exe_AES_op(exe_AES_op),
-		.id_AES_bs(id_AES_bs),              .exe_AES_bs(exe_AES_bs)
+		.id_AES_bs(id_AES_bs),              .exe_AES_bs(exe_AES_bs),
+		// SHA control signals
+		.id_SHA_op(id_SHA_op),              .exe_SHA_op(exe_SHA_op)
 	);
 
 
@@ -1012,6 +1036,13 @@ module core_extmem (
 	   .mode(exe_AES_op[1]),
 	   .res(exe_AESout)
 	);
+	
+	// SHA Unit
+	sha SHA(
+	   .in_word(opA),
+	   .sel(exe_SHA_op),
+	   .out_word(exe_SHAout)
+	);
 
 	
 	pipereg_exe_mem EXE_MEM(
@@ -1039,7 +1070,9 @@ module core_extmem (
 		
 		// Extensions
 		// AES
-		.exe_AESout(exe_AESout),            .mem_AESout(mem_AESout)
+		.exe_AESout(exe_AESout),            .mem_AESout(mem_AESout),
+		// SHA
+		.exe_SHAout(exe_SHAout),            .mem_SHAout(mem_SHAout)
 	);
 
 
@@ -1117,7 +1150,9 @@ module core_extmem (
 		
 		// Extension signals
 		// AES
-		.mem_AESout(mem_AESout),            .wb_AESout(wb_AESout)
+		.mem_AESout(mem_AESout),            .wb_AESout(wb_AESout),
+		// SHA
+		.mem_SHAout(mem_SHAout),            .wb_SHAout(wb_SHAout)
 	);
 
 
@@ -1129,5 +1164,6 @@ module core_extmem (
 						(wb_sel_data == 3'd2) ? wb_imm :
 						(wb_sel_data == 3'd4) ? wb_DIVout :
 						(wb_sel_data == 3'd5) ? wb_AESout :
+						(wb_sel_data == 3'd6) ? wb_SHAout :
 						wb_loaddata;
 endmodule

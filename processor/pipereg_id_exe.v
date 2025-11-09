@@ -66,8 +66,8 @@ module pipereg_id_exe(
 	output reg [`PC_ADDR_BITS-1:0] exe_PC,
 
 	// Control signals
-	input [3:0] id_ALU_op,
-	output reg [3:0] exe_ALU_op,
+	input [4:0] id_ALU_op,
+	output reg [4:0] exe_ALU_op,
 
 	input [1:0] id_c_btype,
 	output reg [1:0] exe_c_btype,
@@ -120,7 +120,13 @@ module pipereg_id_exe(
 	output reg [1:0] exe_AES_op,                   //
 	                                               //
 	input [1:0] id_AES_bs,                         //
-	output reg [1:0] exe_AES_bs                    //
+	output reg [1:0] exe_AES_bs,                   //
+	/////////////////////////////////////////////////
+	
+	// SHA //////////////////////////////////////////
+	// Control signals                             //
+	input [1:0] id_SHA_op,                         //
+	output reg [1:0] exe_SHA_op                    //
 	/////////////////////////////////////////////////
 );
 
@@ -160,6 +166,8 @@ module pipereg_id_exe(
 			// AES
 			exe_AES_op <= 2'd0;
 			exe_AES_bs <= 2'd0;
+			// SHA
+			exe_SHA_op <= 2'd0;
 		end else begin
 		    if(flush) begin
                 exe_pc4 <= 0;
@@ -196,6 +204,8 @@ module pipereg_id_exe(
                 // AES
 			    exe_AES_op <= 2'd0;
 			    exe_AES_bs <= 2'd0;
+			    // SHA
+			    exe_SHA_op <= 2'd0;
 		    end else if (!stall) begin
                 exe_pc4 <= id_pc4;
                 exe_fwdopA <= id_fwdopA;
@@ -231,6 +241,8 @@ module pipereg_id_exe(
                 // AES
                 exe_AES_op <= id_AES_op;
                 exe_AES_bs <= id_AES_bs;
+                // SHA
+                exe_SHA_op <= id_SHA_op;
             end
             else begin
                 exe_pc4 <= exe_pc4;
@@ -267,6 +279,8 @@ module pipereg_id_exe(
                 // AES
                 exe_AES_op <= exe_AES_op;
                 exe_AES_bs <= exe_AES_bs;
+                // SHA
+                exe_SHA_op <= exe_SHA_op;
             end
 		end
 	end
