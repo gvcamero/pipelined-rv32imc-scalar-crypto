@@ -3,19 +3,10 @@
 #include<string.h>
 
 // Global input
-char message[] = "No matter how long this life may last, we will unfortunately never";
+char message[] = "Hello world!";
 
 // Global output
-uint32_t hash_result[8] = {
-    0x6A09E667,
-    0xBB67AE85,
-    0x3C6EF372,
-    0xA54FF53A,
-    0x510E527F,
-    0x9B05688C,
-    0x1F83D9AB,
-    0x5BE0CD19
-};
+uint32_t hash_result[8];
 
 // K words
 static const uint32_t k_words[64] = {
@@ -94,7 +85,7 @@ void SHA256_Hash(char* data){
     padded_message[data_len] = 0x80;
 
     // pad 8-byte length
-    uint64_t bit_len = data_len * 8;
+    uint64_t bit_len = (uint64_t)data_len << 3;
     padded_message[padded_bytes - 8] = (bit_len >> 56) & 0xFF;
     padded_message[padded_bytes - 7] = (bit_len >> 48) & 0xFF;
     padded_message[padded_bytes - 6] = (bit_len >> 40) & 0xFF;
@@ -121,13 +112,23 @@ void SHA256_Hash(char* data){
 
     // ----------- HASHING -----------------------------------------------------------------
 
+    // Initialized hash values
+    hash_result[0] = 0x6A09E667;
+    hash_result[1] = 0xBB67AE85;
+    hash_result[2] = 0x3C6EF372;
+    hash_result[3] = 0xA54FF53A;
+    hash_result[4] = 0x510E527F;
+    hash_result[5] = 0x9B05688C;
+    hash_result[6] = 0x1F83D9AB;
+    hash_result[7] = 0x5BE0CD19;
+
     // Initialize message schedule array
     uint32_t msg_sch[64];
 
     // Pointer to the 512-bit blocks array
     uint32_t* block_ptr;
     // Main hash loop that iterates across all blocks
-    for(int i = 0; i < num_blocks; i++){
+    for(size_t i = 0; i < num_blocks; i++){
 
         block_ptr = (uint32_t*)padded_message + (i * 16);
 
@@ -181,10 +182,23 @@ void SHA256_Hash(char* data){
             a = T1 + T2;
         }
 
+        // Compute intermediate hash value
+        hash_result[0] = a + hash_result[0];
+        hash_result[1] = b + hash_result[1];
+        hash_result[2] = c + hash_result[2];
+        hash_result[3] = d + hash_result[3];
+        hash_result[4] = e + hash_result[4];
+        hash_result[5] = f + hash_result[5];
+        hash_result[6] = g + hash_result[6];
+        hash_result[7] = h + hash_result[7];
     }
 
 }
 
 int main(){
     SHA256_Hash(message);
+    // UNCOMMENT IF NEED TO PRINT OUTPUT
+    /*for(int i = 0; i < 8; i++){
+        printf("%08X", hash_result[i]);
+    }*/
 }
