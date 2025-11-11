@@ -3,7 +3,7 @@
 #include<string.h>
 
 // Global input
-char message[] = "Hello world!";
+char message[] = "Matcha is a finely ground powder made from specially grown and processed green tea leaves, celebrated for its vibrant green color, distinct earthy flavor, and numerous health benefits. Unlike regular green tea, where the leaves are steeped and then discarded, matcha involves consuming the entire leaf in powdered form, which makes it far richer in antioxidants, amino acids, and nutrients such as catechins, chlorophyll, and L-theanine. Its cultivation requires careful shading of the tea plants for several weeks before harvest, a process that boosts chlorophyll production and deepens the tea's vivid hue while enhancing its natural sweetness and umami taste. After harvesting, the leaves are steamed to prevent oxidation, dried, and stone-ground into an ultra-fine powder using traditional granite mills, resulting in a texture as smooth as talcum powder.";
 
 // Global output
 uint32_t hash_result[8];
@@ -21,11 +21,11 @@ static const uint32_t k_words[64] = {
 };
 
 // byte swap
-void bswap32(uint32_t* data){
-    *data = (*data << 24)           | 
-            ((*data & 0xFF00) << 8) |
-            ((*data >> 8) & 0xFF00) | 
-            (*data >> 24);
+uint32_t bswap32(const uint32_t data){
+    return  (data << 24)           | 
+            ((data & 0xFF00) << 8) |
+            ((data >> 8) & 0xFF00) | 
+            (data >> 24);
 }
 
 // sum0
@@ -133,25 +133,22 @@ void SHA256_Hash(char* data){
         block_ptr = (uint32_t*)padded_message + (i * 16);
 
         // Prepare message schedule: first 16 words
-        memcpy(msg_sch, block_ptr, 64);
-
-        // Swap bytes
-        bswap32(&msg_sch[0]);
-        bswap32(&msg_sch[1]);
-        bswap32(&msg_sch[2]);
-        bswap32(&msg_sch[3]);
-        bswap32(&msg_sch[4]);
-        bswap32(&msg_sch[5]);
-        bswap32(&msg_sch[6]);
-        bswap32(&msg_sch[7]);
-        bswap32(&msg_sch[8]);
-        bswap32(&msg_sch[9]);
-        bswap32(&msg_sch[10]);
-        bswap32(&msg_sch[11]);
-        bswap32(&msg_sch[12]);
-        bswap32(&msg_sch[13]);
-        bswap32(&msg_sch[14]);
-        bswap32(&msg_sch[15]);
+        msg_sch[0] = bswap32(block_ptr[0]);
+        msg_sch[1] = bswap32(block_ptr[1]);
+        msg_sch[2] = bswap32(block_ptr[2]);
+        msg_sch[3] = bswap32(block_ptr[3]);
+        msg_sch[4] = bswap32(block_ptr[4]);
+        msg_sch[5] = bswap32(block_ptr[5]);
+        msg_sch[6] = bswap32(block_ptr[6]);
+        msg_sch[7] = bswap32(block_ptr[7]);
+        msg_sch[8] = bswap32(block_ptr[8]);
+        msg_sch[9] = bswap32(block_ptr[9]);
+        msg_sch[10] = bswap32(block_ptr[10]);
+        msg_sch[11] = bswap32(block_ptr[11]);
+        msg_sch[12] = bswap32(block_ptr[12]);
+        msg_sch[13] = bswap32(block_ptr[13]);
+        msg_sch[14] = bswap32(block_ptr[14]);
+        msg_sch[15] = bswap32(block_ptr[15]);
 
         // Rest of message schedule
         for(int j = 16; j < 64; j++){
