@@ -86,14 +86,10 @@ void SHA256_Hash(char* data){
 
     // pad 8-byte length
     uint64_t bit_len = (uint64_t)data_len << 3;
-    padded_message[padded_bytes - 8] = (bit_len >> 56) & 0xFF;
-    padded_message[padded_bytes - 7] = (bit_len >> 48) & 0xFF;
-    padded_message[padded_bytes - 6] = (bit_len >> 40) & 0xFF;
-    padded_message[padded_bytes - 5] = (bit_len >> 32) & 0xFF;
-    padded_message[padded_bytes - 4] = (bit_len >> 24) & 0xFF;
-    padded_message[padded_bytes - 3] = (bit_len >> 16) & 0xFF;
-    padded_message[padded_bytes - 2] = (bit_len >> 8) & 0xFF;
-    padded_message[padded_bytes - 1] = bit_len & 0xFF;
+    uint32_t* bit_len_ptr = (uint32_t*)&bit_len;
+    uint32_t* padded_ptr = (uint32_t*)&padded_message[padded_bytes - 8];
+    padded_ptr[0] = bswap32(bit_len_ptr[1]);
+    padded_ptr[1] = bswap32(bit_len_ptr[0]);
 
     // OUTPUT PRINTING FOR DEBUGGING PURPOSES
     /*printf("uint8_t input_array[] = {\n    ");
