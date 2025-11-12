@@ -3,7 +3,7 @@
 #include<string.h>
 
 // Global input
-char message[] = "Hello world!";
+char message[] = "Matcha is a finely ground powder made from specially grown and processed green tea leaves, celebrated for its vibrant green color, distinct earthy flavor, and numerous health benefits. Unlike regular green tea, where the leaves are steeped and then discarded, matcha involves consuming the entire leaf in powdered form, which makes it far richer in antioxidants, amino acids, and nutrients such as catechins, chlorophyll, and L-theanine. Its cultivation requires careful shading of the tea plants for several weeks before harvest, a process that boosts chlorophyll production and deepens the tea's vivid hue while enhancing its natural sweetness and umami taste. After harvesting, the leaves are steamed to prevent oxidation, dried, and stone-ground into an ultra-fine powder using traditional granite mills, resulting in a texture as smooth as talcum powder.";
 
 // Global output
 uint32_t hash_result[8];
@@ -33,22 +33,46 @@ uint32_t bswap32(const uint32_t data){
 
 // sum0
 uint32_t sum0(const uint32_t data){
-    return ((data >> 2) | (data << 30)) ^ ((data >> 13) | (data << 19)) ^ ((data >> 22) | (data << 10));
+    uint32_t result;
+
+    asm volatile("sha256sum0 %0, %1"
+                : "=r"(result)
+                : "r"(data));
+    
+    return result;
 }
 
 // sum1
 uint32_t sum1(const uint32_t data){
-    return ((data >> 6) | (data << 26)) ^ ((data >> 11) | (data << 21)) ^ ((data >> 25) | (data << 7));
+    uint32_t result;
+
+    asm volatile("sha256sum1 %0, %1"
+                : "=r"(result)
+                : "r"(data));
+    
+    return result;
 }
 
 // sig0
 uint32_t sig0(const uint32_t data){
-    return ((data >> 7) | (data << 25)) ^ ((data >> 18) | (data << 14)) ^ (data >> 3);
+    uint32_t result;
+
+    asm volatile("sha256sig0 %0, %1"
+                : "=r"(result)
+                : "r"(data));
+    
+    return result;
 }
 
 // sig1
 uint32_t sig1(const uint32_t data){
-    return ((data >> 17) | (data << 15)) ^ ((data >> 19) | (data << 13)) ^ (data >> 10);
+    uint32_t result;
+
+    asm volatile("sha256sig1 %0, %1"
+                : "=r"(result)
+                : "r"(data));
+    
+    return result;
 }
 
 // Ch
@@ -89,14 +113,10 @@ void SHA256_Hash(char* data){
 
     // pad 8-byte length
     uint64_t bit_len = (uint64_t)data_len << 3;
-    padded_message[padded_bytes - 8] = (bit_len >> 56) & 0xFF;
-    padded_message[padded_bytes - 7] = (bit_len >> 48) & 0xFF;
-    padded_message[padded_bytes - 6] = (bit_len >> 40) & 0xFF;
-    padded_message[padded_bytes - 5] = (bit_len >> 32) & 0xFF;
-    padded_message[padded_bytes - 4] = (bit_len >> 24) & 0xFF;
-    padded_message[padded_bytes - 3] = (bit_len >> 16) & 0xFF;
-    padded_message[padded_bytes - 2] = (bit_len >> 8) & 0xFF;
-    padded_message[padded_bytes - 1] = bit_len & 0xFF;
+    uint32_t* bit_len_ptr = (uint32_t*)&bit_len;
+    uint32_t* padded_ptr = (uint32_t*)&padded_message[padded_bytes - 8];
+    padded_ptr[0] = bswap32(bit_len_ptr[1]);
+    padded_ptr[1] = bswap32(bit_len_ptr[0]);
 
     // OUTPUT PRINTING FOR DEBUGGING PURPOSES
     /*printf("uint8_t input_array[] = {\n    ");
