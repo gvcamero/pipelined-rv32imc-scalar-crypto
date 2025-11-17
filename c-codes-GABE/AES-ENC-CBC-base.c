@@ -283,28 +283,35 @@ void SubShiftMixARK(block data, block round_key){
     // MixColumns, AddRoundKey
 
     // Column 1
-    data[0] = xTIMES(tmp[0]) ^ (tmp[1] ^ xTIMES(tmp[1])) ^ tmp[2] ^ tmp[3] ^ round_key[0];
-    data[1] = xTIMES(tmp[1]) ^ (tmp[2] ^ xTIMES(tmp[2])) ^ tmp[3] ^ tmp[0] ^ round_key[1];
-    data[2] = xTIMES(tmp[2]) ^ (tmp[3] ^ xTIMES(tmp[3])) ^ tmp[0] ^ tmp[1] ^ round_key[2];
-    data[3] = xTIMES(tmp[3]) ^ (tmp[0] ^ xTIMES(tmp[0])) ^ tmp[1] ^ tmp[2] ^ round_key[3];
+    data[0] = xTIMES(tmp[0]) ^ (tmp[1] ^ xTIMES(tmp[1])) ^ tmp[2] ^ tmp[3];
+    data[1] = xTIMES(tmp[1]) ^ (tmp[2] ^ xTIMES(tmp[2])) ^ tmp[3] ^ tmp[0];
+    data[2] = xTIMES(tmp[2]) ^ (tmp[3] ^ xTIMES(tmp[3])) ^ tmp[0] ^ tmp[1];
+    data[3] = xTIMES(tmp[3]) ^ (tmp[0] ^ xTIMES(tmp[0])) ^ tmp[1] ^ tmp[2];
 
     // Column 2
-    data[4] = xTIMES(tmp[4]) ^ (tmp[5] ^ xTIMES(tmp[5])) ^ tmp[6] ^ tmp[7] ^ round_key[4];
-    data[5] = xTIMES(tmp[5]) ^ (tmp[6] ^ xTIMES(tmp[6])) ^ tmp[7] ^ tmp[4] ^ round_key[5];
-    data[6] = xTIMES(tmp[6]) ^ (tmp[7] ^ xTIMES(tmp[7])) ^ tmp[4] ^ tmp[5] ^ round_key[6];
-    data[7] = xTIMES(tmp[7]) ^ (tmp[4] ^ xTIMES(tmp[4])) ^ tmp[5] ^ tmp[6] ^ round_key[7];
+    data[4] = xTIMES(tmp[4]) ^ (tmp[5] ^ xTIMES(tmp[5])) ^ tmp[6] ^ tmp[7];
+    data[5] = xTIMES(tmp[5]) ^ (tmp[6] ^ xTIMES(tmp[6])) ^ tmp[7] ^ tmp[4];
+    data[6] = xTIMES(tmp[6]) ^ (tmp[7] ^ xTIMES(tmp[7])) ^ tmp[4] ^ tmp[5];
+    data[7] = xTIMES(tmp[7]) ^ (tmp[4] ^ xTIMES(tmp[4])) ^ tmp[5] ^ tmp[6];
 
     // Column 3
-    data[8] = xTIMES(tmp[8]) ^ (tmp[9] ^ xTIMES(tmp[9])) ^ tmp[10] ^ tmp[11] ^ round_key[8];
-    data[9] = xTIMES(tmp[9]) ^ (tmp[10] ^ xTIMES(tmp[10])) ^ tmp[11] ^ tmp[8] ^ round_key[9];
-    data[10] = xTIMES(tmp[10]) ^ (tmp[11] ^ xTIMES(tmp[11])) ^ tmp[8] ^ tmp[9] ^ round_key[10];
-    data[11] = xTIMES(tmp[11]) ^ (tmp[8] ^ xTIMES(tmp[8])) ^ tmp[9] ^ tmp[10] ^ round_key[11];
+    data[8] = xTIMES(tmp[8]) ^ (tmp[9] ^ xTIMES(tmp[9])) ^ tmp[10] ^ tmp[11];
+    data[9] = xTIMES(tmp[9]) ^ (tmp[10] ^ xTIMES(tmp[10])) ^ tmp[11] ^ tmp[8];
+    data[10] = xTIMES(tmp[10]) ^ (tmp[11] ^ xTIMES(tmp[11])) ^ tmp[8] ^ tmp[9];
+    data[11] = xTIMES(tmp[11]) ^ (tmp[8] ^ xTIMES(tmp[8])) ^ tmp[9] ^ tmp[10];
 
     // Column 4
-    data[12] = xTIMES(tmp[12]) ^ (tmp[13] ^ xTIMES(tmp[13])) ^ tmp[14] ^ tmp[15] ^ round_key[12];
-    data[13] = xTIMES(tmp[13]) ^ (tmp[14] ^ xTIMES(tmp[14])) ^ tmp[15] ^ tmp[12] ^ round_key[13];
-    data[14] = xTIMES(tmp[14]) ^ (tmp[15] ^ xTIMES(tmp[15])) ^ tmp[12] ^ tmp[13] ^ round_key[14];
-    data[15] = xTIMES(tmp[15]) ^ (tmp[12] ^ xTIMES(tmp[12])) ^ tmp[13] ^ tmp[14] ^ round_key[15];
+    data[12] = xTIMES(tmp[12]) ^ (tmp[13] ^ xTIMES(tmp[13])) ^ tmp[14] ^ tmp[15];
+    data[13] = xTIMES(tmp[13]) ^ (tmp[14] ^ xTIMES(tmp[14])) ^ tmp[15] ^ tmp[12];
+    data[14] = xTIMES(tmp[14]) ^ (tmp[15] ^ xTIMES(tmp[15])) ^ tmp[12] ^ tmp[13];
+    data[15] = xTIMES(tmp[15]) ^ (tmp[12] ^ xTIMES(tmp[12])) ^ tmp[13] ^ tmp[14];
+
+    uint32_t* data_col = (uint32_t*)data;
+    uint32_t* key_col = (uint32_t*)round_key;
+    data_col[0] = data_col[0] ^ key_col[0];
+    data_col[1] = data_col[1] ^ key_col[1];
+    data_col[2] = data_col[2] ^ key_col[2];
+    data_col[3] = data_col[3] ^ key_col[3];
 
 }
 
@@ -409,51 +416,87 @@ void CBC(block plaintext[], size_t num_blocks, block key_schedule[11], block IV)
 }
 
 // Global input
-block in_plaintext[4] = {
+block in_plaintext[10] = {
     {
-    0x6B, 0xC1, 0xBE, 0xE2, 
-    0x2E, 0x40, 0x9F, 0x96, 
-    0xE9, 0x3D, 0x7E, 0x11, 
-    0x73, 0x93, 0x17, 0x2A
+        0xf9, 0xb7, 0x92, 0xa1, 
+        0x19, 0xc5, 0x84, 0xa6, 
+        0x0c, 0x54, 0x2b, 0xe9, 
+        0xa5, 0xe1, 0xfd, 0xcd
     },
     {
-    0xAE, 0x2D, 0x8A, 0x57, 
-    0x1E, 0x03, 0xAC, 0x9C, 
-    0x9E, 0xB7, 0x6F, 0xAC, 
-    0x45, 0xAF, 0x8E, 0x51
+        0x46, 0x10, 0xd7, 0x3b, 
+        0x78, 0x44, 0x66, 0x2d, 
+        0xdc, 0xf3, 0xf3, 0x69, 
+        0xc6, 0xc7, 0xbd, 0x8e
     },
     {
-    0x30, 0xC8, 0x1C, 0x46, 
-    0xA3, 0x5C, 0xE4, 0x11, 
-    0xE5, 0xFB, 0xC1, 0x19, 
-    0x1A, 0x0A, 0x52, 0xEF
+        0xd6, 0x3c, 0xda, 0x83, 
+        0xe1, 0x35, 0x96, 0x61, 
+        0x8e, 0x6c, 0x14, 0x5b, 
+        0xc9, 0x4d, 0x88, 0x9a
     },
     {
-    0xF6, 0x9F, 0x24, 0x45, 
-    0xDF, 0x4F, 0x9B, 0x17, 
-    0xAD, 0x2B, 0x41, 0x7B, 
-    0xE6, 0x6C, 0x37, 0x10
+        0xc3, 0x71, 0xec, 0xfb, 
+        0xd5, 0xa9, 0xca, 0x24, 
+        0xe5, 0xa8, 0x2a, 0x29, 
+        0xc7, 0xc8, 0x3b, 0xff
+    },
+    {
+        0x03, 0xce, 0xc9, 0x88, 
+        0x5d, 0xad, 0xdd, 0x4e, 
+        0x8d, 0xd9, 0xaf, 0x55, 
+        0xd0, 0x0c, 0x73, 0x05
+    },
+    {
+        0x99, 0x58, 0x8f, 0x89, 
+        0x59, 0x20, 0x76, 0xba, 
+        0x08, 0x54, 0x3c, 0xe9, 
+        0xf4, 0x23, 0xe0, 0x19
+    },
+    {
+        0x6b, 0xc2, 0x5a, 0x91, 
+        0x05, 0x6f, 0x5c, 0xed, 
+        0x2a, 0xc7, 0x99, 0x48, 
+        0xb5, 0xa2, 0xf6, 0xb7
+    },
+    {
+        0x91, 0x75, 0x24, 0x0b, 
+        0x8c, 0xa0, 0xf7, 0x99, 
+        0x96, 0x13, 0x98, 0x7c, 
+        0x72, 0xdc, 0xd6, 0xc0
+    },
+    {
+        0x90, 0x96, 0xba, 0x56, 
+        0x2d, 0xdc, 0xcc, 0xba, 
+        0x1e, 0xa7, 0x9a, 0x5a, 
+        0x04, 0x3c, 0x9a, 0x9a
+    },
+    {
+        0xa2, 0x61, 0x32, 0x5f, 
+        0x49, 0xab, 0xf2, 0xea, 
+        0x9b, 0xed, 0x27, 0xd9, 
+        0x7b, 0x8b, 0xbd, 0xc7
     }
 };
 
 // Global key
 block in_key[11] = {
     {
-    0x2B, 0x7E, 0x15, 0x16, 
-    0x28, 0xAE, 0xD2, 0xA6, 
-    0xAB, 0xF7, 0x15, 0x88, 
-    0x09, 0xCF, 0x4F, 0x3C
+        0xa9, 0x0a, 0x8f, 0x86, 
+        0xf0, 0x56, 0x5b, 0xf8, 
+        0x60, 0x1e, 0x43, 0x9d, 
+        0xaf, 0x94, 0x86, 0x7a
     }
 };
 
 // Initialization vector
 block init_vector = {
-    0x00, 0x01, 0x02, 0x03, 
-    0x04, 0x05, 0x06, 0x07, 
-    0x08, 0x09, 0x0A, 0x0B, 
-    0x0C, 0x0D, 0x0E, 0x0F
+    0x89, 0x25, 0xdd, 0x48, 
+    0x2c, 0x05, 0x30, 0x7c, 
+    0x7b, 0x35, 0x46, 0x8a, 
+    0x8d, 0xa3, 0x8b, 0x1a
 };
 
 int main(){
-    CBC(in_plaintext, 4, in_key, init_vector);
+    CBC(in_plaintext, 10, in_key, init_vector);
 }
