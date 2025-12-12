@@ -3,10 +3,10 @@
 #include<string.h>
 
 // Global input
-char message[] = "Matcha is a finely ground powder made from specially grown and processed green tea leaves, celebrated for its vibrant green color, distinct earthy flavor, and numerous health benefits. Unlike regular green tea, where the leaves are steeped and then discarded, matcha involves consuming the entire leaf in powdered form, which makes it far richer in antioxidants, amino acids, and nutrients such as catechins, chlorophyll, and L-theanine. Its cultivation requires careful shading of the tea plants for several weeks before harvest, a process that boosts chlorophyll production and deepens the tea's vivid hue while enhancing its natural sweetness and umami taste. After harvesting, the leaves are steamed to prevent oxidation, dried, and stone-ground into an ultra-fine powder using traditional granite mills, resulting in a texture as smooth as talcum powder. Matcha has deep cultural roots in Japan, particularly in the Japanese tea ceremony (chanoyu), where it represents mindfulness, respect, and harmony. In modern times, it has gained worldwide popularity not only as a traditional drink but also as an ingredient in lattes, smoothies, desserts, and even savory dishes, offering a balance of invigorating energy and calm focus thanks to its combination of caffeine and L-theanine. The taste of matcha can vary depending on its grade; ceremonial-grade matcha is delicate, smooth, and naturally sweet, while culinary-grade matcha, intended for cooking or baking, has a bolder, more astringent flavor. Beyond its aesthetic and sensory appeal, scientific studies suggest that regular matcha consumption may promote heart health, aid metabolism, enhance concentration, and reduce stress levels, making it not only a versatile beverage but also a symbol of wellness and balance in both traditional and contemporary cultures.";
+char message[] = "";
 
 // Global output
-uint32_t hash_result[8];
+uint32_t digest[8];
 
 // K words
 static const uint32_t k_words[64] = {
@@ -66,7 +66,7 @@ uint32_t Maj(const uint32_t x, const uint32_t y, const uint32_t z){
     return (x & y) | (z & (x | y));
 }
 
-void SHA256_Hash(char* data){
+void SHA256_Hash(char* data, uint32_t hash_result[8]){
 
     // ----------- PRE-PROCESSING ------------------------------------------------------------
 
@@ -197,9 +197,9 @@ void SHA256_Hash(char* data){
 }
 
 int main(){
-    SHA256_Hash(message);
+    SHA256_Hash(message, digest);
     // UNCOMMENT IF NEED TO PRINT OUTPUT
     /*for(int i = 0; i < 8; i++){
-        printf("%08X", hash_result[i]);
+        printf("%08X", digest[i]);
     }*/
 }
