@@ -28,7 +28,7 @@ This project is a modification of an existing base RV32IMC core created by stude
   + sha256sum0
   + sha256sum1
 
-The rest of this readme is from the original RV32IMC project's repository.
+The rest of this readme is from the original RV32IMC project's repository ext-memory branch.
 
 ***
 
