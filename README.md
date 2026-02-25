@@ -1,3 +1,37 @@
+# About the project
+This project is a modification of an existing base RV32IMC core created by students from UP Diliman Microlab as part of a capstone project. The modifications implemented in this project adds select scalar cryptography extensions to the core:
++ Zbkb - Bitmanip instructions for Cryptography
+  + ror
+  + rol
+  + rori
+  + andn
+  + orn
+  + xnor
+  + pack
+  + packh
+  + brev8
+  + rev8
+  + zip
+  + unzip
++ Zbkc - Carry-less multiply instructions
+  + clmul
+  + clmulh
++ Zknd - NIST Suite: AES Decryption
+  + aes32dsi
+  + aes32dsmi
++ Zkne - NIST Suite: AES Encryption
+  + aes32esi
+  + aes32esmi
++ Zknh - NIST Suite: Hash Function Instructions
+  + sha256sig0
+  + sha256sig1
+  + sha256sum0
+  + sha256sum1
+
+The rest of this readme is from the original RV32IMC project's repository.
+
+***
+
 This is an experimental branch that moves the data and instruction memory outside the core, to be replaced with AMBA AXI4/AXI4-Lite bus interfaces. The new core is *core-extmem* and this modified core does not yet work with the top module.
 
 The changes made to the instmem and datamem modules break *top.v* and *core.v*. Do not use this branch if you're trying to use them.
